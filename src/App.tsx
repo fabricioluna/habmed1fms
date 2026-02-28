@@ -1,19 +1,18 @@
 import React, { useState } from 'react';
-import Header from './components/Header.tsx';
-import HomeView from './views/HomeView.tsx';
-import CareerQuiz from './components/CareerQuiz.tsx';
-import CalculatorsView from './views/CalculatorsView.tsx';
-import DisciplineView from './views/DisciplineView.tsx'; // IMPORTAÇÃO DO HUB
-import type { ViewState } from './types.ts';
-import { SIMULATIONS } from './constants.tsx';
+import Header from './components/Header';
+import HomeView from './views/HomeView';
+import CareerQuiz from './components/CareerQuiz';
+import CalculatorsView from './views/CalculatorsView';
+import DisciplineView from './views/DisciplineView';
+import type { ViewState } from './types';
+import { SIMULATIONS } from './constants';
 
-const APP_VERSION = "1.3.0 - Hub da Disciplina Ativado";
+const APP_VERSION = "1.3.1 - Calculadoras e Rotas Corrigidas";
 
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<ViewState>('home');
   const [selectedDisciplineId, setSelectedDisciplineId] = useState<string | null>(null);
 
-  // Removido o alert! Agora ele navega de verdade.
   const handleSelectDiscipline = (id: string) => {
     setSelectedDisciplineId(id);
     setCurrentView('discipline');
@@ -44,12 +43,11 @@ const App: React.FC = () => {
           <CalculatorsView onBack={() => setCurrentView('home')} />
         )}
 
-        {/* ECRÃ DO HUB DA DISCIPLINA RENDERIZADO AQUI */}
         {currentView === 'discipline' && selectedDisciplineId && (
           <DisciplineView 
             disciplineId={selectedDisciplineId} 
             disciplines={SIMULATIONS}
-            summaries={[]} // Array vazio temporário até ligarmos o Firebase
+            summaries={[]} 
             onBack={() => setCurrentView('home')} 
             onSelectOption={(type) => setCurrentView(type as ViewState)}
           />

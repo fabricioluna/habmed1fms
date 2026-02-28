@@ -1,4 +1,4 @@
-import type { SimulationInfo } from './types.ts';
+import type { SimulationInfo } from './types';
 
 export const SIMULATIONS: SimulationInfo[] = [
   {

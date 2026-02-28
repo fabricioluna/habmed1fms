@@ -5,9 +5,10 @@ interface HomeViewProps {
   disciplines: SimulationInfo[];
   onSelectDiscipline: (id: string) => void;
   onNavigateToQuiz: () => void;
+  onNavigateToCalculators: () => void; // AQUI ESTÁ A CORREÇÃO!
 }
 
-const HomeView: React.FC<HomeViewProps> = ({ disciplines, onSelectDiscipline, onNavigateToQuiz }) => {
+const HomeView: React.FC<HomeViewProps> = ({ disciplines, onSelectDiscipline, onNavigateToQuiz, onNavigateToCalculators }) => {
   const hm1 = disciplines.find(d => d.id === 'hm1');
 
   return (
@@ -60,10 +61,22 @@ const HomeView: React.FC<HomeViewProps> = ({ disciplines, onSelectDiscipline, on
         <h3 className="text-sm font-black text-gray-400 uppercase tracking-widest text-center mb-8">
           Ferramentas Extras
         </h3>
-        <div className="flex justify-center">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl mx-auto">
+          {/* BOTÃO DA CALCULADORA ATIVADO */}
+          <button 
+            onClick={onNavigateToCalculators}
+            className="bg-[#003366] text-white p-6 rounded-3xl flex items-center gap-4 hover:bg-[#D4A017] hover:text-[#003366] transition-all group shadow-md"
+          >
+            <div className="text-3xl">🧮</div>
+            <div className="text-left">
+              <h4 className="font-black uppercase tracking-tight">Calculadora de Média</h4>
+              <p className="text-[10px] font-medium opacity-80 uppercase tracking-widest">Simule suas notas FMS</p>
+            </div>
+          </button>
+          
           <button 
             onClick={onNavigateToQuiz}
-            className="bg-white border-2 border-gray-100 p-6 rounded-3xl flex items-center gap-4 hover:border-[#D4A017] transition-all group shadow-sm w-full max-w-sm"
+            className="bg-white border-2 border-gray-100 p-6 rounded-3xl flex items-center gap-4 hover:border-[#D4A017] transition-all group shadow-sm"
           >
             <div className="text-3xl">🧭</div>
             <div className="text-left">
