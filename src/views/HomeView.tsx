@@ -1,12 +1,13 @@
 import React from 'react';
-import type { SimulationInfo } from '../types.ts';
+import type { SimulationInfo } from '../types';
 
 interface HomeViewProps {
   disciplines: SimulationInfo[];
   onSelectDiscipline: (id: string) => void;
+  onNavigateToQuiz: () => void;
 }
 
-const HomeView: React.FC<HomeViewProps> = ({ disciplines, onSelectDiscipline }) => {
+const HomeView: React.FC<HomeViewProps> = ({ disciplines, onSelectDiscipline, onNavigateToQuiz }) => {
   const hm1 = disciplines.find(d => d.id === 'hm1');
 
   return (
@@ -14,10 +15,10 @@ const HomeView: React.FC<HomeViewProps> = ({ disciplines, onSelectDiscipline }) 
       
       <div className="mb-12 text-center">
         <span className="bg-[#D4A017]/20 text-[#003366] px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest mb-4 inline-block border border-[#D4A017]/30">
-          Calouros • 1º Semestre
+          Turma IX • 1º Semestre
         </span>
         <h2 className="text-4xl md:text-5xl font-black text-[#003366] mb-4 tracking-tighter">
-          Laboratório de Simulação
+          Monitor Virtual
         </h2>
         <p className="text-gray-500 max-w-2xl mx-auto text-sm font-medium leading-relaxed">
           Treine a sua prática clínica, responda a quizzes teóricos e faça simulações de atendimento com Inteligência Artificial.
@@ -53,6 +54,26 @@ const HomeView: React.FC<HomeViewProps> = ({ disciplines, onSelectDiscipline }) 
           </button>
         </div>
       )}
+
+      {/* Ferramentas Extras */}
+      <div className="border-t border-gray-200 pt-12">
+        <h3 className="text-sm font-black text-gray-400 uppercase tracking-widest text-center mb-8">
+          Ferramentas Extras
+        </h3>
+        <div className="flex justify-center">
+          <button 
+            onClick={onNavigateToQuiz}
+            className="bg-white border-2 border-gray-100 p-6 rounded-3xl flex items-center gap-4 hover:border-[#D4A017] transition-all group shadow-sm w-full max-w-sm"
+          >
+            <div className="text-3xl">🧭</div>
+            <div className="text-left">
+              <h4 className="font-black text-[#003366] uppercase tracking-tight">Quiz Vocacional</h4>
+              <p className="text-[10px] font-medium text-gray-400 uppercase tracking-widest">Descubra sua especialidade</p>
+            </div>
+          </button>
+        </div>
+      </div>
+
     </div>
   );
 };

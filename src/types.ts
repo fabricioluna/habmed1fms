@@ -1,4 +1,14 @@
-export type ViewState = 'home' | 'discipline' | 'admin';
+export type ViewState = 
+  | 'home' 
+  | 'discipline' 
+  | 'admin' 
+  | 'career-quiz' 
+  | 'calculators'
+  | 'quiz-setup'
+  | 'osce-setup'
+  | 'osce-ai-setup'
+  | 'summaries-list'
+  | 'references-view';
 
 export interface ReferenceMaterial {
   id: string;
@@ -17,4 +27,16 @@ export interface SimulationInfo {
   status: 'active' | 'locked';
   themes: string[];
   references?: ReferenceMaterial[];
+}
+
+export interface Summary {
+  id: string;
+  disciplineId: string;
+  title: string;
+  url: string;
+  type: 'summary' | 'script' | 'other';
+  date: string;
+  label: string;
+  isFolder?: boolean;
+  firebaseId?: string;
 }

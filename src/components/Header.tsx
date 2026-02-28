@@ -1,6 +1,6 @@
 import React from 'react';
-import type { ViewState } from '../types.ts';
-import { Settings, Home, Activity } from 'lucide-react';
+import type { ViewState } from '../types';
+import { Settings, Home } from 'lucide-react';
 
 interface HeaderProps {
   onNavigate: (view: ViewState) => void;
@@ -12,15 +12,19 @@ const Header: React.FC<HeaderProps> = ({ onNavigate }) => {
       <div className="max-w-7xl mx-auto flex justify-between items-center">
         
         <div className="flex items-center gap-3 cursor-pointer group" onClick={() => onNavigate('home')}>
-          <div className="bg-white p-2 rounded-xl group-hover:scale-105 transition-transform shadow-sm">
-            <Activity size={24} className="text-[#003366]" />
+          <div className="bg-white p-1.5 rounded-xl group-hover:scale-105 transition-transform shadow-sm flex items-center justify-center w-12 h-12">
+            <img 
+              src="https://medicinadosertao.com.br/wp-content/uploads/2020/03/cropped-cropped-1-LOGO-HEADER-32x32.png" 
+              alt="Logo FMS" 
+              className="w-10 h-10 object-contain"
+            />
           </div>
           <div>
             <h1 className="text-xl md:text-2xl font-black tracking-tighter leading-none">
               Portal<span className="text-[#D4A017]">HM1</span>
             </h1>
             <p className="text-[9px] font-bold text-gray-300 uppercase tracking-widest mt-0.5">
-              1º Período • FMS
+              Desenvolvido por Fabrício Luna - Turma VIII
             </p>
           </div>
         </div>
