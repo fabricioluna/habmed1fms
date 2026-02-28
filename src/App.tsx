@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import Header from './components/Header';
-import HomeView from './views/HomeView';
-import type { ViewState } from './types';
-import { SIMULATIONS } from './constants';
+import Header from './components/Header.tsx';
+import HomeView from './views/HomeView.tsx';
+import type { ViewState } from './types.ts';
+import { SIMULATIONS } from './constants.tsx';
 
-const APP_VERSION = "1.0.0 - Base Visual HM1";
+const APP_VERSION = "1.0.1 - Design e Servidor Corrigidos";
 
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<ViewState>('home');
