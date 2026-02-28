@@ -1,35 +1,43 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import React, { useState } from 'react';
+import Header from './components/Header';
+import HomeView from './views/HomeView';
+import { ViewState } from './types';
+import { SIMULATIONS } from './constants';
 
-function App() {
-  const [count, setCount] = useState(0)
+const APP_VERSION = "1.0.0 - Base Visual HM1";
+
+const App: React.FC = () => {
+  const [currentView, setCurrentView] = useState<ViewState>('home');
+  const [selectedDisciplineId, setSelectedDisciplineId] = useState<string | null>(null);
+
+  const handleSelectDiscipline = (id: string) => {
+    setSelectedDisciplineId(id);
+    alert(`Preparando o hub de ${id}... Próxima etapa!`); 
+  };
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
-}
+    <div className="min-h-screen flex flex-col bg-[#f4f7f6] font-sans">
+      <Header onNavigate={(view) => {
+        setCurrentView(view);
+        if (view === 'home') setSelectedDisciplineId(null);
+      }} />
 
-export default App
+      <div className="flex-grow">
+        {currentView === 'home' && (
+          <HomeView 
+            disciplines={SIMULATIONS} 
+            onSelectDiscipline={handleSelectDiscipline} 
+          />
+        )}
+      </div>
+
+      <footer className="bg-white border-t py-8 flex flex-col items-center gap-2 mt-auto">
+        <div className="text-gray-400 text-[10px] font-bold uppercase tracking-widest">© 2026 Medicina do Sertão • 1º Período</div>
+        <div className="text-[#D4A017] text-[11px] font-black uppercase tracking-[0.2em] mb-1">Desenvolvido por Fabrício Luna</div>
+        <div className="text-[8px] text-gray-300 font-black uppercase tracking-tighter">Build {APP_VERSION}</div>
+      </footer>
+    </div>
+  );
+};
+
+export default App;
