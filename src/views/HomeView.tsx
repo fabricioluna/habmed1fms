@@ -1,5 +1,5 @@
 import React from 'react';
-import { SimulationInfo } from '../types';
+import type { SimulationInfo } from '../types.ts';
 
 interface HomeViewProps {
   disciplines: SimulationInfo[];

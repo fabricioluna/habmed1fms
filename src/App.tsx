@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import Header from './components/Header.tsx';
-import HomeView from './views/HomeView.tsx';
-import { ViewState } from './types.ts';
-import { SIMULATIONS } from './constants.tsx';
+import Header from './components/Header';
+import HomeView from './views/HomeView';
+import type { ViewState } from './types';
+import { SIMULATIONS } from './constants';
 
 const APP_VERSION = "1.0.0 - Base Visual HM1";
 

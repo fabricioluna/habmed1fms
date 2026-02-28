@@ -1,5 +1,5 @@
 import React from 'react';
-import { ViewState } from '../types';
+import type { ViewState } from '../types.ts';
 import { Settings, Home, Activity } from 'lucide-react';
 
 interface HeaderProps {
