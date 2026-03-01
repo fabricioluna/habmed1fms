@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { db, storage } from '../firebase';
+import { db } from '../firebase';
 import { collection, query, onSnapshot, orderBy, deleteDoc, doc } from 'firebase/firestore';
-import { ref, deleteObject } from 'firebase/storage';
 import { Trash2, ShieldCheck, Database, LogOut, FileText } from 'lucide-react';
 import type { Summary } from '../types';
 
@@ -21,18 +20,14 @@ const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({ onLogout }) => 
     return () => unsubscribe();
   }, []);
 
-  const handleDelete = async (materialId: string, fileUrl: string) => {
+  const handleDelete = async (materialId: string) => {
     if (!window.confirm("Tem certeza que deseja apagar este material permanentemente?")) return;
 
     try {
-      // 1. Apaga do Firestore
       await deleteDoc(doc(db, "materials", materialId));
-      
-      // Nota: Para apagar do Storage automaticamente, precisaríamos salvar o storagePath.
-      // Por agora, o registro sai da lista do portal imediatamente.
       alert("Material removido com sucesso!");
     } catch (error) {
-      console.error(error);
+      console.error("Erro ao remover:", error);
       alert("Erro ao remover material.");
     }
   };
@@ -77,7 +72,7 @@ const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({ onLogout }) => 
               </div>
             </div>
             <button 
-              onClick={() => handleDelete(m.id, m.url)}
+              onClick={() => handleDelete(m.id)}
               className="text-gray-300 hover:text-red-500 p-3 rounded-xl transition-colors"
               title="Apagar Material"
             >
