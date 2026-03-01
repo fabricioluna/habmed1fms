@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { 
   ArrowRight, RefreshCw, ArrowLeft, Brain, Activity, Slice, Syringe, Home, 
-  Zap, Users, FlaskConical, LifeBuoy, Microscope, UserCheck, Target, Waves, 
-  Stethoscope, Heart, Baby, Eye, Shield, HardHat, Pill, Scissors, Search,
-  Thermometer, Wind, Database, ClipboardList, Ear, User, Scale, Microscope as MicroscopeIcon
+  Zap, Users, FlaskConical, UserCheck, Target, Waves, 
+  Stethoscope, Heart, Baby, Eye, Shield, HardHat, Scissors, Search,
+  Wind, Ear, Scale, Microscope as MicroscopeIcon
 } from 'lucide-react';
 
 type Specialty = 

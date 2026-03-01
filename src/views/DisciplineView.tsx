@@ -1,15 +1,15 @@
 import React from 'react';
-import type { SimulationInfo, Summary } from '../types';
+import type { SimulationInfo } from '../types';
 
 interface DisciplineViewProps {
   disciplineId: string;
   disciplines: SimulationInfo[];
-  summaries: Summary[];
   onBack: () => void;
   onSelectOption: (type: string) => void;
+  summaries?: any; 
 }
 
-const DisciplineView: React.FC<DisciplineViewProps> = ({ disciplineId, disciplines, summaries, onBack, onSelectOption }) => {
+const DisciplineView: React.FC<DisciplineViewProps> = ({ disciplineId, disciplines, onBack, onSelectOption }) => {
   const discipline = disciplines.find(d => d.id === disciplineId);
   if (!discipline) return null;
 
