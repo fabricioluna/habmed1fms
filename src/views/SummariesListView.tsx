@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FileText, Download, Loader2, Search, Plus, FileCheck, X, User, AlignLeft, CheckCircle2 } from 'lucide-react';
+import { FileText, Download, Loader2, Search, Plus, FileCheck, X, User, CheckCircle2, AlertCircle } from 'lucide-react';
 import { db, storage } from '../firebase';
 import { collection, addDoc, query, where, onSnapshot, orderBy, serverTimestamp } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
@@ -17,163 +17,84 @@ const SummariesListView: React.FC<SummariesListViewProps> = ({ disciplineId, onB
   const [showForm, setShowForm] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
-  const [formData, setFormData] = useState({
-    title: '',
-    author: '',
-    description: '',
-    type: 'summary' as 'summary' | 'script' | 'other'
-  });
+  const [formData, setFormData] = useState({ title: '', author: '', description: '', type: 'summary' as any });
 
-  // 1. Monitorar Banco de Dados (Melhorado para evitar sumiço de dados)
   useEffect(() => {
-    // Nota: Se a lista sumir, verifique o Console do Navegador (F12). 
-    // Pode ser necessário clicar num link para criar um "Índice do Firestore".
-    const q = query(
-      collection(db, "materials"),
-      where("disciplineId", "==", disciplineId),
-      orderBy("createdAt", "desc")
-    );
-
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const docs = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as Summary[];
-      setSummaries(docs);
-    }, (error) => {
-      console.error("Erro ao carregar dados:", error);
-    });
-
+    const q = query(collection(db, "materials"), where("disciplineId", "==", disciplineId), orderBy("createdAt", "desc"));
+    const unsubscribe = onSnapshot(q, (s) => {
+      setSummaries(s.docs.map(d => ({ id: d.id, ...d.data() })) as Summary[]);
+    }, (err) => console.error("ERRO FIREBASE: Verifique se criou o ÍNDICE COMPOSTO no console.", err));
     return () => unsubscribe();
   }, [disciplineId]);
 
-  // 2. Seleção de ficheiro
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) setSelectedFile(file);
-  };
-
-  // 3. Upload com Confirmação
   const handleConfirmUpload = async () => {
-    if (!selectedFile || !formData.title || !formData.author) {
-      alert("Por favor, preencha todos os campos obrigatórios.");
-      return;
-    }
-
+    if (!selectedFile || !formData.title || !formData.author) return alert("Preencha Título e Autor.");
     try {
       setIsUploading(true);
-      const storageRef = ref(storage, `materials/${disciplineId}/${Date.now()}_${selectedFile.name}`);
-      const snapshot = await uploadBytes(storageRef, selectedFile);
-      const downloadURL = await getDownloadURL(snapshot.ref);
+      const sRef = ref(storage, `materials/${disciplineId}/${Date.now()}_${selectedFile.name}`);
+      const snap = await uploadBytes(sRef, selectedFile);
+      const url = await getDownloadURL(snap.ref);
 
       await addDoc(collection(db, "materials"), {
+        ...formData,
         disciplineId,
-        title: formData.title,
-        author: formData.author,
-        description: formData.description,
-        url: downloadURL,
-        type: formData.type,
+        url,
         date: new Date().toLocaleDateString('pt-BR'),
-        label: selectedFile.name.split('.').pop()?.toUpperCase() || 'FILE',
+        label: selectedFile.name.split('.').pop()?.toUpperCase() || 'PDF',
         createdAt: serverTimestamp()
       });
 
-      alert("Material compartilhado com sucesso!");
-      setShowForm(false);
-      setSelectedFile(null);
+      alert("Enviado com sucesso!");
+      setShowForm(false); setSelectedFile(null);
       setFormData({ title: '', author: '', description: '', type: 'summary' });
-    } catch (error) {
-      alert("Erro ao enviar. Verifique as Rules do Storage.");
-    } finally {
-      setIsUploading(false);
-    }
+    } catch (e) { alert("Erro ao enviar. Verifique as Rules do Storage."); }
+    finally { setIsUploading(false); }
   };
-
-  const filteredSummaries = summaries.filter(s => 
-    s.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    s.author.toLowerCase().includes(searchTerm.toLowerCase())
-  );
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-8 animate-in fade-in slide-in-from-bottom-8 duration-700 pb-32">
-      <button onClick={onBack} className="group flex items-center text-[#003366] font-bold mb-8 hover:text-[#D4A017] transition-all">
-        <span className="mr-2 transition-transform group-hover:-translate-x-1">←</span> Voltar ao Início
-      </button>
+      <button onClick={onBack} className="text-[#003366] font-bold mb-8 hover:text-[#D4A017] transition-all flex items-center gap-2">← Voltar</button>
 
-      {/* Cabeçalho */}
-      <div className="bg-white rounded-[3rem] p-8 md:p-14 shadow-2xl border border-gray-100 mb-8 relative overflow-hidden text-left">
-         <div className="absolute top-0 right-0 w-64 h-64 bg-blue-50 rounded-full -mr-20 -mt-20 opacity-50"></div>
-         <div className="relative z-10 flex flex-col md:flex-row gap-8 justify-between items-center md:items-start">
-           <div className="flex-grow">
-             <span className="bg-[#D4A017]/20 text-[#003366] px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest mb-4 inline-block border border-[#D4A017]/30">Nuvem da Turma IX</span>
-             <h1 className="text-4xl md:text-5xl font-black text-[#003366] mb-4 tracking-tighter leading-tight">Central de Materiais</h1>
-             <p className="text-gray-600 text-lg font-medium">Os materiais são atualizados automaticamente para todos.</p>
+      <div className="bg-white rounded-[3rem] p-8 md:p-12 shadow-2xl border border-gray-100 mb-8 relative overflow-hidden text-left">
+         <div className="relative z-10 flex flex-col md:flex-row gap-8 justify-between items-center">
+           <div>
+             <h1 className="text-4xl font-black text-[#003366] mb-2 tracking-tighter">Central de Materiais</h1>
+             <p className="text-gray-500 font-medium">O conhecimento cresce quando é compartilhado.</p>
            </div>
-           
            {!showForm ? (
-             <button onClick={() => setShowForm(true)} className="bg-[#003366] text-white px-8 py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl hover:bg-[#D4A017] hover:text-[#003366] transition-all flex items-center gap-2 shrink-0">
-               <Plus size={18} /><span>Enviar Material</span>
-             </button>
+             <button onClick={() => setShowForm(true)} className="bg-[#003366] text-white px-8 py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl hover:bg-[#D4A017] transition-all flex items-center gap-2"><Plus size={18} /><span>Enviar Material</span></button>
            ) : (
-             <button onClick={() => {setShowForm(false); setSelectedFile(null);}} className="bg-red-50 text-red-500 px-6 py-4 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-red-500 hover:text-white transition-all flex items-center gap-2 shrink-0">
-               <X size={18} /><span>Cancelar</span>
-             </button>
+             <button onClick={() => {setShowForm(false); setSelectedFile(null);}} className="bg-red-50 text-red-500 px-6 py-4 rounded-2xl font-black uppercase text-xs flex items-center gap-2"><X size={18} /><span>Cancelar</span></button>
            )}
          </div>
 
          {showForm && (
-           <div className="mt-8 p-6 bg-gray-50 rounded-[2rem] border-2 border-dashed border-gray-200 animate-in fade-in zoom-in duration-300">
+           <div className="mt-8 p-6 bg-gray-50 rounded-[2rem] border-2 border-dashed border-gray-200 animate-in zoom-in duration-300">
              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-               <input 
-                 type="text" 
-                 placeholder="Legenda / Título"
-                 className="bg-white p-4 rounded-xl border border-gray-100 outline-none focus:border-[#D4A017] font-bold text-sm"
-                 value={formData.title}
-                 onChange={e => setFormData({...formData, title: e.target.value})}
-               />
-               <input 
-                 type="text" 
-                 placeholder="Autor(a)"
-                 className="bg-white p-4 rounded-xl border border-gray-100 outline-none focus:border-[#D4A017] font-bold text-sm"
-                 value={formData.author}
-                 onChange={e => setFormData({...formData, author: e.target.value})}
-               />
-               <select 
-                 className="bg-white p-4 rounded-xl border border-gray-100 outline-none focus:border-[#D4A017] font-bold text-sm"
-                 value={formData.type}
-                 onChange={e => setFormData({...formData, type: e.target.value as any})}
-               >
-                 <option value="summary">Resumo</option>
-                 <option value="script">Simulado</option>
-                 <option value="other">Outro</option>
+               <input type="text" placeholder="Legenda / Título" className="bg-white p-4 rounded-xl outline-none font-bold text-sm border focus:border-[#D4A017]" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} />
+               <input type="text" placeholder="Autor(a)" className="bg-white p-4 rounded-xl outline-none font-bold text-sm border focus:border-[#D4A017]" value={formData.author} onChange={e => setFormData({...formData, author: e.target.value})} />
+               <select className="bg-white p-4 rounded-xl font-bold text-sm border" value={formData.type} onChange={e => setFormData({...formData, type: e.target.value})}>
+                 <option value="summary">Resumo</option><option value="script">Simulado</option><option value="other">Outro</option>
                </select>
              </div>
-             <textarea 
-               placeholder="Descrição (Opcional)"
-               className="w-full bg-white p-4 rounded-xl border border-gray-100 outline-none focus:border-[#D4A017] font-bold text-sm min-h-[80px] mb-6 resize-none"
-               value={formData.description}
-               onChange={e => setFormData({...formData, description: e.target.value})}
-             />
+             <textarea placeholder="Descrição (Opcional)" className="w-full bg-white p-4 rounded-xl mb-6 min-h-[80px] font-bold text-sm border outline-none focus:border-[#D4A017]" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} />
              
-             {/* ETAPA DE CONFIRMAÇÃO */}
              {!selectedFile ? (
-               <label className="w-full cursor-pointer bg-white border-2 border-[#003366] text-[#003366] p-6 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-[#003366] hover:text-white transition-all flex items-center justify-center gap-3">
-                 <Plus size={20} /><span>Escolher Arquivo</span>
-                 <input type="file" className="hidden" onChange={handleFileSelect} accept=".pdf,.doc,.docx,.ppt,.pptx,.txt" />
+               <label className="w-full cursor-pointer bg-white border-2 border-[#003366] text-[#003366] p-6 rounded-2xl font-black uppercase text-xs text-center block hover:bg-[#003366] hover:text-white transition-all">
+                 <Plus className="inline mr-2" /> Escolher Arquivo
+                 <input type="file" className="hidden" onChange={e => e.target.files && setSelectedFile(e.target.files[0])} accept=".pdf,.doc,.docx,.ppt,.pptx,.txt" />
                </label>
              ) : (
-               <div className="bg-green-50 border-2 border-green-200 p-6 rounded-2xl text-center">
-                 <div className="flex items-center justify-center gap-2 mb-4 text-green-700 font-black uppercase text-xs tracking-widest">
-                   <CheckCircle2 size={20} /> Arquivo Selecionado: {selectedFile.name}
+               <div className="bg-white border-2 border-green-200 p-8 rounded-3xl text-center shadow-inner">
+                 <div className="text-green-600 font-black uppercase text-[10px] tracking-widest mb-2"><CheckCircle2 className="inline mr-1" /> Arquivo Selecionado</div>
+                 <h4 className="text-[#003366] font-black text-lg mb-6">{selectedFile.name}</h4>
+                 <div className="flex gap-3">
+                    <button onClick={() => setSelectedFile(null)} className="flex-1 bg-gray-100 text-gray-400 p-4 rounded-xl font-black uppercase text-xs">Trocar</button>
+                    <button onClick={handleConfirmUpload} disabled={isUploading} className="flex-[2] bg-[#003366] text-white p-4 rounded-xl font-black uppercase text-xs flex items-center justify-center gap-2">
+                      {isUploading ? <Loader2 className="animate-spin" /> : <CheckCircle2 size={18} />}
+                      {isUploading ? 'A ENVIAR...' : 'CONFIRMAR E PUBLICAR'}
+                    </button>
                  </div>
-                 <button 
-                   onClick={handleConfirmUpload}
-                   disabled={isUploading}
-                   className="w-full bg-[#003366] text-white p-5 rounded-xl font-black uppercase text-xs tracking-widest hover:bg-[#D4A017] hover:text-[#003366] transition-all flex items-center justify-center gap-3"
-                 >
-                   {isUploading ? <Loader2 className="animate-spin" /> : <FileCheck />}
-                   {isUploading ? 'A enviar...' : 'Confirmar e Enviar para a Turma'}
-                 </button>
                </div>
              )}
            </div>
@@ -181,44 +102,29 @@ const SummariesListView: React.FC<SummariesListViewProps> = ({ disciplineId, onB
       </div>
 
       <div className="mb-8 relative">
-        <Search className="absolute inset-y-0 left-6 flex items-center text-gray-400 my-auto" size={20} />
-        <input 
-          type="text" 
-          placeholder="Pesquisar material..." 
-          className="w-full bg-white pl-14 pr-6 py-5 rounded-2xl border-2 border-transparent focus:border-[#D4A017] outline-none text-[#003366] font-bold shadow-sm"
-          value={searchTerm}
-          onChange={e => setSearchTerm(e.target.value)}
-        />
+        <Search className="absolute inset-y-0 left-6 flex items-center text-gray-400" size={20} />
+        <input type="text" placeholder="Pesquisar..." className="w-full bg-white pl-14 pr-6 py-5 rounded-2xl border-2 border-transparent focus:border-[#D4A017] outline-none text-[#003366] font-bold shadow-sm" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
       </div>
 
       <div className="space-y-4 text-left">
-        {filteredSummaries.map((summary) => (
-          <div key={summary.id} className="bg-white p-6 rounded-[2.5rem] border border-gray-100 flex items-start justify-between group hover:border-[#D4A017] transition-all">
+        {summaries.filter(s => s.title.toLowerCase().includes(searchTerm.toLowerCase())).map((s) => (
+          <div key={s.id} className="bg-white p-6 rounded-[2.5rem] border border-gray-100 flex items-start justify-between group hover:border-[#D4A017] transition-all">
             <div className="flex items-start gap-5">
-              <div className="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center text-[#003366] group-hover:bg-[#003366] group-hover:text-white transition-all shrink-0">
-                <FileCheck size={28} />
-              </div>
+              <div className="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center text-[#003366] group-hover:bg-[#003366] group-hover:text-white transition-all shrink-0"><FileCheck size={28} /></div>
               <div>
-                <h3 className="font-black text-[#003366] text-lg leading-tight">{summary.title}</h3>
+                <h3 className="font-black text-[#003366] text-lg leading-tight">{s.title}</h3>
                 <div className="flex items-center gap-3 mt-1 mb-2">
-                  <div className="flex items-center gap-1 text-[10px] font-black text-[#D4A017] uppercase"><User size={12} /> {summary.author}</div>
+                  <div className="flex items-center gap-1 text-[10px] font-black text-[#D4A017] uppercase tracking-wider"><User size={12} /> {s.author}</div>
                   <span className="text-gray-300">|</span>
-                  <span className="text-[10px] font-bold text-gray-400 uppercase">{summary.date}</span>
-                  <span className="bg-gray-100 text-gray-500 px-2 py-0.5 rounded text-[9px] font-black">{summary.label}</span>
+                  <span className="text-[10px] font-bold text-gray-400 uppercase">{s.date}</span>
+                  <span className="bg-gray-100 text-gray-500 px-2 py-0.5 rounded text-[9px] font-black">{s.label}</span>
                 </div>
-                {summary.description && (
-                  <div className="bg-gray-50 p-3 rounded-xl border border-gray-100 text-xs text-gray-500 font-medium leading-relaxed">
-                    {summary.description}
-                  </div>
-                )}
+                {s.description && <div className="bg-gray-50 p-3 rounded-xl border border-gray-100 text-xs text-gray-500 italic">"{s.description}"</div>}
               </div>
             </div>
-            <a href={summary.url} target="_blank" rel="noreferrer" className="bg-[#f4f7f6] hover:bg-[#D4A017] text-[#003366] p-4 rounded-xl transition-all"><Download size={24} /></a>
+            <a href={s.url} target="_blank" rel="noreferrer" className="bg-[#f4f7f6] hover:bg-[#D4A017] text-[#003366] p-4 rounded-xl transition-all shrink-0"><Download size={24} /></a>
           </div>
         ))}
-        {filteredSummaries.length === 0 && (
-          <div className="text-center py-20 bg-white rounded-[3rem] border-2 border-dashed border-gray-100 text-gray-400 font-bold uppercase text-xs">Aguardando novos materiais...</div>
-        )}
       </div>
     </div>
   );

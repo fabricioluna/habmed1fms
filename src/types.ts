@@ -41,5 +41,4 @@ export interface Summary {
   date: string;
   label: string;
   createdAt: any;
-  storagePath?: string; // Caminho para apagar o ficheiro real
 }
