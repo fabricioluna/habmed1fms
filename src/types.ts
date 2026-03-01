@@ -11,25 +11,6 @@ export type ViewState =
   | 'summaries-list'
   | 'references-view';
 
-export interface ReferenceMaterial {
-  id: string;
-  title: string;
-  author?: string;
-  type: 'book' | 'article' | 'link' | 'video';
-  url?: string;
-}
-
-export interface SimulationInfo {
-  id: string;
-  title: string;
-  description: string;
-  meta: string;
-  icon: string;
-  status: 'active' | 'locked';
-  themes: string[];
-  references?: ReferenceMaterial[];
-}
-
 export interface Summary {
   id: string;
   disciplineId: string;
@@ -41,4 +22,14 @@ export interface Summary {
   date: string;
   label: string;
   createdAt: any;
+}
+
+export interface SimulationInfo {
+  id: string;
+  title: string;
+  description: string;
+  meta: string;
+  icon: string;
+  status: 'active' | 'locked';
+  themes: string[];
 }
