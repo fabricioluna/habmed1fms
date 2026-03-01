@@ -46,15 +46,17 @@ const DisciplineView: React.FC<DisciplineViewProps> = ({ disciplineId, disciplin
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+        {/* 1. SIMULADOR TEÓRICO */}
         <button onClick={() => onSelectOption('quiz-setup')} className="bg-white p-6 md:p-8 rounded-[2rem] text-left hover:shadow-xl transition-all group border-2 border-transparent hover:border-[#D4A017]">
           <div className="flex items-center justify-between mb-4">
             <div className="w-12 h-12 bg-blue-50 text-[#003366] rounded-xl flex items-center justify-center text-2xl group-hover:bg-[#003366] group-hover:text-white transition-colors">📝</div>
             <div className="text-gray-300 group-hover:text-[#D4A017] transition-colors">→</div>
           </div>
-          <h3 className="text-xl font-black text-[#003366] mb-2 uppercase tracking-tight">Simulado Teórico</h3>
+          <h3 className="text-xl font-black text-[#003366] mb-2 uppercase tracking-tight">Simulador Teórico</h3>
           <p className="text-xs text-gray-500 font-medium">Avalie seus conhecimentos com questões de múltipla escolha.</p>
         </button>
 
+        {/* 2. SIMULADOR PRÁTICO OBJETIVO */}
         <button onClick={() => onSelectOption('osce-setup')} className="bg-white p-6 md:p-8 rounded-[2rem] text-left hover:shadow-xl transition-all group border-2 border-transparent hover:border-[#D4A017]">
           <div className="flex items-center justify-between mb-4">
             <div className="w-12 h-12 bg-blue-50 text-[#003366] rounded-xl flex items-center justify-center text-2xl group-hover:bg-[#003366] group-hover:text-white transition-colors">
@@ -63,15 +65,14 @@ const DisciplineView: React.FC<DisciplineViewProps> = ({ disciplineId, disciplin
             <div className="text-gray-300 group-hover:text-[#D4A017] transition-colors">→</div>
           </div>
           <h3 className="text-xl font-black text-[#003366] mb-2 uppercase tracking-tight">
-            {isUC ? 'Simulado de Laboratório' : 'Simulado Prático (OSCE)'}
+            Simulador Prático Objetivo
           </h3>
           <p className="text-xs text-gray-500 font-medium">
-            {isUC 
-              ? 'Treine a identificação de lâminas histológicas e peças anatômicas.' 
-              : 'Treine o passo a passo de exames clínicos de forma gamificada.'}
+            Treine o passo a passo de exames clínicos e habilidades médicas de forma gamificada.
           </p>
         </button>
 
+        {/* 3. PACIENTE VIRTUAL POR IA */}
         {disciplineId === 'hm1' && (
           <button onClick={() => onSelectOption('osce-ai-setup')} className="bg-gradient-to-br from-[#003366] to-[#001f3f] text-white p-6 md:p-8 rounded-[2rem] text-left hover:scale-105 transition-all shadow-xl group relative overflow-hidden md:col-span-2">
             <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-5 rounded-full -mr-10 -mt-10 blur-2xl"></div>
@@ -84,15 +85,17 @@ const DisciplineView: React.FC<DisciplineViewProps> = ({ disciplineId, disciplin
           </button>
         )}
 
+        {/* 4. CENTRAL DE MATERIAIS COMPARTILHADOS */}
         <button onClick={() => onSelectOption('summaries-list')} className="bg-white p-6 md:p-8 rounded-[2rem] text-left hover:shadow-xl transition-all group border-2 border-transparent hover:border-[#D4A017]">
           <div className="flex items-center justify-between mb-4">
             <div className="w-12 h-12 bg-blue-50 text-[#003366] rounded-xl flex items-center justify-center text-2xl group-hover:bg-[#003366] group-hover:text-white transition-colors">📂</div>
             <div className="text-gray-300 group-hover:text-[#D4A017] transition-colors">→</div>
           </div>
-          <h3 className="text-xl font-black text-[#003366] mb-2 uppercase tracking-tight">Central de Materiais</h3>
+          <h3 className="text-xl font-black text-[#003366] mb-2 uppercase tracking-tight">Central de Materiais Compartilhados</h3>
           <p className="text-xs text-gray-500 font-medium">Acesse resumos, roteiros de aulas práticas e materiais extras da turma.</p>
         </button>
 
+        {/* 5. REFERÊNCIAS BIBLIOGRÁFICAS */}
         <button onClick={() => onSelectOption('references-view')} className="bg-white p-6 md:p-8 rounded-[2rem] text-left hover:shadow-xl transition-all group border-2 border-transparent hover:border-[#D4A017]">
           <div className="flex items-center justify-between mb-4">
             <div className="w-12 h-12 bg-blue-50 text-[#003366] rounded-xl flex items-center justify-center text-2xl group-hover:bg-[#003366] group-hover:text-white transition-colors">📚</div>

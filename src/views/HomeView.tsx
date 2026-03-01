@@ -3,14 +3,12 @@ import type { SimulationInfo } from '../types';
 
 interface HomeViewProps {
   disciplines: SimulationInfo[];
-  onSelectDiscipline: (id: string) => void;
   onNavigateToQuiz: () => void;
-  onNavigateToCalculators: () => void; // AQUI ESTÁ A CORREÇÃO!
+  onNavigateToCalculators: () => void;
+  onSelectOption: (option: string, disciplineId: string) => void;
 }
 
-const HomeView: React.FC<HomeViewProps> = ({ disciplines, onSelectDiscipline, onNavigateToQuiz, onNavigateToCalculators }) => {
-  const hm1 = disciplines.find(d => d.id === 'hm1');
-
+const HomeView: React.FC<HomeViewProps> = ({ disciplines, onNavigateToQuiz, onNavigateToCalculators, onSelectOption }) => {
   return (
     <div className="max-w-5xl mx-auto px-4 py-12 animate-in fade-in zoom-in duration-500">
       
@@ -21,40 +19,75 @@ const HomeView: React.FC<HomeViewProps> = ({ disciplines, onSelectDiscipline, on
         <h2 className="text-4xl md:text-5xl font-black text-[#003366] mb-4 tracking-tighter">
           Monitor Virtual
         </h2>
+        {/* TEXTO ATUALIZADO COM A PARTILHA DE MATERIAIS 👇 */}
         <p className="text-gray-500 max-w-2xl mx-auto text-sm font-medium leading-relaxed">
-          Treine a sua prática clínica, responda a quizzes teóricos e faça simulações de atendimento com Inteligência Artificial.
+          Sua plataforma central de estudos: pratique com simuladores clínicos, converse com pacientes virtuais por IA, acesse e compartilhe materiais com a turma, e calcule suas médias.
         </p>
       </div>
 
-      {hm1 && (
-        <div className="max-w-2xl mx-auto mb-16">
-          <button
-            onClick={() => onSelectDiscipline(hm1.id)}
-            className="w-full text-left p-8 md:p-10 bg-white rounded-[3rem] shadow-xl hover:shadow-2xl transition-all border-2 border-transparent hover:border-[#D4A017] relative overflow-hidden group hover:-translate-y-2 cursor-pointer"
-          >
-            <div className="absolute top-0 right-0 w-48 h-48 bg-blue-50 rounded-full -mr-16 -mt-16 opacity-50 group-hover:scale-150 transition-transform duration-700"></div>
-            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-8 relative z-10">
-              <div className="w-28 h-28 bg-[#003366] rounded-[2.5rem] flex items-center justify-center text-6xl shadow-lg group-hover:scale-110 transition-transform shrink-0">
-                {hm1.icon}
-              </div>
-              <div className="text-center sm:text-left">
-                <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest mb-3 inline-block">
-                  {hm1.meta}
-                </span>
-                <h3 className="text-3xl md:text-4xl font-black text-[#003366] mb-3 tracking-tighter leading-tight">
-                  {hm1.title}
-                </h3>
-                <p className="text-sm text-gray-500 font-medium leading-relaxed mb-6">
-                  {hm1.description}
-                </p>
-                <div className="text-[#D4A017] font-black uppercase tracking-widest text-xs flex items-center justify-center sm:justify-start gap-2 bg-[#D4A017]/10 w-fit mx-auto sm:mx-0 px-4 py-2 rounded-xl group-hover:bg-[#003366] group-hover:text-white transition-colors">
-                  Acessar Hub de Estudos <span>→</span>
-                </div>
-              </div>
+      {/* Módulos de Estudo - HM1 */}
+      <div className="mb-12">
+        <h3 className="text-sm font-black text-gray-400 uppercase tracking-widest text-center mb-8">
+          Módulo Ativo: Habilidades Médicas 1
+        </h3>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+          {/* 1. SIMULADOR TEÓRICO */}
+          <button onClick={() => onSelectOption('quiz-setup', 'hm1')} className="bg-white p-6 md:p-8 rounded-[2rem] text-left hover:shadow-xl transition-all group border-2 border-transparent hover:border-[#D4A017]">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-blue-50 text-[#003366] rounded-xl flex items-center justify-center text-2xl group-hover:bg-[#003366] group-hover:text-white transition-colors">📝</div>
+              <div className="text-gray-300 group-hover:text-[#D4A017] transition-colors">→</div>
             </div>
+            <h3 className="text-xl font-black text-[#003366] mb-2 uppercase tracking-tight">Simulador Teórico</h3>
+            <p className="text-xs text-gray-500 font-medium">Avalie seus conhecimentos com questões de múltipla escolha.</p>
+          </button>
+
+          {/* 2. SIMULADOR PRÁTICO OBJETIVO */}
+          <button onClick={() => onSelectOption('osce-setup', 'hm1')} className="bg-white p-6 md:p-8 rounded-[2rem] text-left hover:shadow-xl transition-all group border-2 border-transparent hover:border-[#D4A017]">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-blue-50 text-[#003366] rounded-xl flex items-center justify-center text-2xl group-hover:bg-[#003366] group-hover:text-white transition-colors">🩺</div>
+              <div className="text-gray-300 group-hover:text-[#D4A017] transition-colors">→</div>
+            </div>
+            <h3 className="text-xl font-black text-[#003366] mb-2 uppercase tracking-tight">
+              Simulador Prático Objetivo
+            </h3>
+            <p className="text-xs text-gray-500 font-medium">
+              Treine o passo a passo de exames clínicos e habilidades médicas de forma gamificada.
+            </p>
+          </button>
+
+          {/* 3. PACIENTE VIRTUAL POR IA */}
+          <button onClick={() => onSelectOption('osce-ai-setup', 'hm1')} className="bg-gradient-to-br from-[#003366] to-[#001f3f] text-white p-6 md:p-8 rounded-[2rem] text-left hover:scale-105 transition-all shadow-xl group relative overflow-hidden md:col-span-2">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-5 rounded-full -mr-10 -mt-10 blur-2xl"></div>
+            <div className="flex items-center justify-between mb-4 relative z-10">
+              <div className="w-14 h-14 bg-white/10 rounded-2xl flex items-center justify-center text-3xl group-hover:bg-[#D4A017] group-hover:text-[#003366] transition-all">🤖</div>
+              <div className="w-8 h-8 rounded-full border-2 border-white/20 flex items-center justify-center group-hover:border-[#D4A017] group-hover:text-[#D4A017] font-black">→</div>
+            </div>
+            <h3 className="text-xl font-black uppercase tracking-tight mb-2 relative z-10 text-[#D4A017]">Paciente Virtual por IA</h3>
+            <p className="text-xs opacity-90 font-medium leading-relaxed relative z-10">Pratique sua anamnese conversando livremente pelo chat com um paciente simulado pela nossa Inteligência Artificial.</p>
+          </button>
+
+          {/* 4. CENTRAL DE MATERIAIS COMPARTILHADOS */}
+          <button onClick={() => onSelectOption('summaries-list', 'hm1')} className="bg-white p-6 md:p-8 rounded-[2rem] text-left hover:shadow-xl transition-all group border-2 border-transparent hover:border-[#D4A017]">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-blue-50 text-[#003366] rounded-xl flex items-center justify-center text-2xl group-hover:bg-[#003366] group-hover:text-white transition-colors">📂</div>
+              <div className="text-gray-300 group-hover:text-[#D4A017] transition-colors">→</div>
+            </div>
+            <h3 className="text-xl font-black text-[#003366] mb-2 uppercase tracking-tight">Central de Materiais Compartilhados</h3>
+            <p className="text-xs text-gray-500 font-medium">Acesse resumos, roteiros de aulas práticas e materiais extras da turma.</p>
+          </button>
+
+          {/* 5. REFERÊNCIAS BIBLIOGRÁFICAS */}
+          <button onClick={() => onSelectOption('references-view', 'hm1')} className="bg-white p-6 md:p-8 rounded-[2rem] text-left hover:shadow-xl transition-all group border-2 border-transparent hover:border-[#D4A017]">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-blue-50 text-[#003366] rounded-xl flex items-center justify-center text-2xl group-hover:bg-[#003366] group-hover:text-white transition-colors">📚</div>
+              <div className="text-gray-300 group-hover:text-[#D4A017] transition-colors">→</div>
+            </div>
+            <h3 className="text-xl font-black text-[#003366] mb-2 uppercase tracking-tight">Referências Bibliográficas</h3>
+            <p className="text-xs text-gray-500 font-medium">Links diretos para os livros oficiais na biblioteca da faculdade.</p>
           </button>
         </div>
-      )}
+      </div>
 
       {/* Ferramentas Extras */}
       <div className="border-t border-gray-200 pt-12">
@@ -62,7 +95,6 @@ const HomeView: React.FC<HomeViewProps> = ({ disciplines, onSelectDiscipline, on
           Ferramentas Extras
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl mx-auto">
-          {/* BOTÃO DA CALCULADORA ATIVADO */}
           <button 
             onClick={onNavigateToCalculators}
             className="bg-[#003366] text-white p-6 rounded-3xl flex items-center gap-4 hover:bg-[#D4A017] hover:text-[#003366] transition-all group shadow-md"

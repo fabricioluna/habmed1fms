@@ -3,20 +3,16 @@ import Header from './components/Header';
 import HomeView from './views/HomeView';
 import CareerQuiz from './components/CareerQuiz';
 import CalculatorsView from './views/CalculatorsView';
-import DisciplineView from './views/DisciplineView';
+import ReferencesView from './views/ReferencesView';
+import SummariesListView from './views/SummariesListView'; // NOVA IMPORTAÇÃO
 import type { ViewState } from './types';
 import { SIMULATIONS } from './constants';
 
-const APP_VERSION = "1.3.1 - Calculadoras e Rotas Corrigidas";
+const APP_VERSION = "1.6.0 - Central de Materiais Ativa";
 
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<ViewState>('home');
   const [selectedDisciplineId, setSelectedDisciplineId] = useState<string | null>(null);
-
-  const handleSelectDiscipline = (id: string) => {
-    setSelectedDisciplineId(id);
-    setCurrentView('discipline');
-  };
 
   return (
     <div className="min-h-screen flex flex-col bg-[#f4f7f6] font-sans">
@@ -29,9 +25,12 @@ const App: React.FC = () => {
         {currentView === 'home' && (
           <HomeView 
             disciplines={SIMULATIONS} 
-            onSelectDiscipline={handleSelectDiscipline}
             onNavigateToQuiz={() => setCurrentView('career-quiz')}
             onNavigateToCalculators={() => setCurrentView('calculators')}
+            onSelectOption={(option, disciplineId) => {
+              setSelectedDisciplineId(disciplineId);
+              setCurrentView(option as ViewState);
+            }}
           />
         )}
         
@@ -43,15 +42,24 @@ const App: React.FC = () => {
           <CalculatorsView onBack={() => setCurrentView('home')} />
         )}
 
-        {currentView === 'discipline' && selectedDisciplineId && (
-          <DisciplineView 
-            disciplineId={selectedDisciplineId} 
+        {currentView === 'references-view' && selectedDisciplineId && (
+          <ReferencesView 
+            disciplineId={selectedDisciplineId}
             disciplines={SIMULATIONS}
-            summaries={[]} 
-            onBack={() => setCurrentView('home')} 
-            onSelectOption={(type) => setCurrentView(type as ViewState)}
+            onBack={() => setCurrentView('home')}
           />
         )}
+
+        {/* NOVO ECRÃ: CENTRAL DE MATERIAIS */}
+        {currentView === 'summaries-list' && selectedDisciplineId && (
+          <SummariesListView 
+            disciplineId={selectedDisciplineId}
+            onBack={() => setCurrentView('home')}
+          />
+        )}
+
+        {/* As futuras telas (Quiz, Paciente IA) serão renderizadas aqui em breve! */}
+        
       </div>
 
       <footer className="bg-white border-t py-8 flex flex-col items-center gap-2 mt-auto">
