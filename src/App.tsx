@@ -48,25 +48,36 @@ const App: React.FC = () => {
           <AdminDashboardView onLogout={() => setCurrentView('home')} />
         )}
 
-        {currentView === 'references-view' && selectedDisciplineId && (
-          <ReferencesView disciplineId={selectedDisciplineId} disciplines={SIMULATIONS} onBack={() => setCurrentView('home')} />
+        {currentView === 'summaries-list' && selectedDisciplineId && (
+          <SummariesListView 
+            disciplineId={selectedDisciplineId} 
+            onBack={() => setCurrentView('home')} 
+          />
         )}
 
-        {currentView === 'summaries-list' && selectedDisciplineId && (
-          <SummariesListView disciplineId={selectedDisciplineId} onBack={() => setCurrentView('home')} />
+        {currentView === 'references-view' && selectedDisciplineId && (
+          <ReferencesView 
+            disciplineId={selectedDisciplineId} 
+            disciplines={SIMULATIONS} 
+            onBack={() => setCurrentView('home')} 
+          />
         )}
       </div>
 
       <footer className="bg-white border-t py-12 flex flex-col items-center gap-4 mt-auto">
         <button 
           onClick={() => setCurrentView('admin-login')}
-          className="text-gray-300 hover:text-[#003366] transition-colors text-[10px] font-black uppercase tracking-[0.3em]"
+          className="text-gray-300 hover:text-[#003366] transition-colors text-[10px] font-black uppercase tracking-[0.3em] cursor-pointer"
         >
           Acesso Restrito
         </button>
         <div className="text-center">
-          <div className="text-[#D4A017] text-[11px] font-black uppercase tracking-[0.2em] mb-1">Desenvolvido por Fabrício Luna - Turma VIII</div>
-          <div className="text-gray-400 text-[10px] font-bold uppercase tracking-widest">© 2026 Medicina do Sertão</div>
+          <div className="text-[#D4A017] text-[11px] font-black uppercase tracking-[0.2em] mb-1">
+            Desenvolvido por Fabrício Luna - Turma VIII
+          </div>
+          <div className="text-gray-400 text-[10px] font-bold uppercase tracking-widest">
+            © 2026 Medicina do Sertão
+          </div>
         </div>
       </footer>
     </div>
