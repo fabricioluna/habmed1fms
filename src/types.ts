@@ -11,17 +11,12 @@ export type ViewState =
   | 'summaries-list'
   | 'references-view';
 
-export interface Summary {
+export interface ReferenceMaterial {
   id: string;
-  disciplineId: string;
   title: string;
-  author: string;
-  description?: string;
-  url: string;
-  type: 'summary' | 'script' | 'other';
-  date: string;
-  label: string;
-  createdAt: any;
+  author?: string;
+  type: 'book' | 'article' | 'link' | 'video';
+  url?: string;
 }
 
 export interface SimulationInfo {
@@ -32,4 +27,19 @@ export interface SimulationInfo {
   icon: string;
   status: 'active' | 'locked';
   themes: string[];
+  references?: ReferenceMaterial[];
+}
+
+export interface Summary {
+  id: string;
+  disciplineId: string;
+  title: string;
+  author: string;
+  description?: string;
+  url: string;
+  type: 'summary' | 'script' | 'other';
+  date: string;
+  label: string;
+  size?: string; // NOVO CAMPO ADICIONADO AQUI
+  createdAt: any;
 }

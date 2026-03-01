@@ -1,44 +1,61 @@
 import React from 'react';
-import type { ViewState } from '../types';
-import { Settings, Home } from 'lucide-react';
+import { Home, Moon, Sun } from 'lucide-react';
 
 interface HeaderProps {
-  onNavigate: (view: ViewState) => void;
+  onNavigate: (view: 'home' | 'admin-login') => void;
+  isDarkMode: boolean;
+  toggleDarkMode: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ onNavigate }) => {
+const Header: React.FC<HeaderProps> = ({ onNavigate, isDarkMode, toggleDarkMode }) => {
   return (
-    <header className="bg-[#003366] text-white py-4 px-6 shadow-md sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto flex justify-between items-center">
+    <header className="bg-white dark:bg-[#0f172a] border-b border-gray-100 dark:border-slate-800/60 sticky top-0 z-50 transition-colors duration-500 shadow-sm">
+      <div className="max-w-5xl mx-auto px-4 md:px-6 h-24 flex items-center justify-between">
         
-        <div className="flex items-center gap-3 cursor-pointer group" onClick={() => onNavigate('home')}>
-          <div className="bg-white p-1.5 rounded-xl group-hover:scale-105 transition-transform shadow-sm flex items-center justify-center w-12 h-12">
+        <div 
+          className="flex items-center gap-4 cursor-pointer group"
+          onClick={() => onNavigate('home')}
+        >
+          {/* TRUQUE ELEGANTE PARA A LOGO: Fundo branco arredondado no modo escuro */}
+          <div className="dark:bg-white dark:p-1.5 dark:rounded-2xl dark:shadow-sm transition-all duration-300">
             <img 
-              src="https://medicinadosertao.com.br/wp-content/uploads/2020/03/cropped-cropped-1-LOGO-HEADER-32x32.png" 
-              alt="Logo FMS" 
-              className="w-10 h-10 object-contain"
+              src="/logo.png" 
+              alt="Logo da Faculdade" 
+              className="h-14 md:h-16 w-auto object-contain transition-transform group-hover:scale-105"
+              onError={(e) => {
+                e.currentTarget.style.display = 'none';
+                e.currentTarget.parentElement?.querySelector('.fallback-icon')?.classList.remove('hidden');
+              }}
             />
+            <div className="hidden fallback-icon w-12 h-12 bg-[#003366] rounded-xl flex items-center justify-center text-white shadow-lg">
+              <span className="font-black text-xl">FMS</span>
+            </div>
           </div>
-          <div>
-            <h1 className="text-xl md:text-2xl font-black tracking-tighter leading-none">
-              Portal<span className="text-[#D4A017]">HM1</span>
-            </h1>
-            <p className="text-[9px] font-bold text-gray-300 uppercase tracking-widest mt-0.5">
-              Desenvolvido por Fabrício Luna - Turma VIII
-            </p>
+
+          <div className="text-left hidden sm:block pl-1">
+            <h1 className="text-xl font-black text-[#003366] dark:text-slate-100 tracking-tighter leading-none group-hover:text-[#D4A017] transition-colors">HABILIDADES MÉDICAS 1</h1>
+            <p className="text-[10px] font-black text-[#D4A017] uppercase tracking-[0.2em] mt-1">Monitor Virtual • Turma IX</p>
           </div>
         </div>
 
-        <nav className="flex items-center gap-2 md:gap-4">
-          <button onClick={() => onNavigate('home')} className="flex items-center gap-2 text-xs font-bold text-gray-200 hover:text-white bg-white/5 hover:bg-white/10 px-4 py-2 rounded-lg transition-all">
+        <div className="flex items-center gap-2 md:gap-3">
+          <button 
+            onClick={() => onNavigate('home')}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-gray-50 dark:bg-[#1e293b] text-[#003366] dark:text-slate-200 font-bold text-xs uppercase tracking-widest hover:bg-[#003366] hover:text-white dark:hover:bg-[#D4A017] dark:hover:text-[#003366] transition-all shadow-sm"
+          >
             <Home size={16} />
-            <span className="hidden md:inline">Início</span>
+            <span className="hidden lg:block">Início</span>
           </button>
-          <button onClick={() => onNavigate('admin')} className="flex items-center gap-2 text-xs font-bold text-[#D4A017] hover:text-white bg-[#D4A017]/10 hover:bg-[#D4A017]/20 px-4 py-2 rounded-lg transition-all border border-[#D4A017]/20">
-            <Settings size={16} />
-            <span className="hidden md:inline">Admin</span>
+
+          <button 
+            onClick={toggleDarkMode}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-2xl border-2 border-gray-100 dark:border-slate-700 text-gray-500 dark:text-slate-300 font-bold text-xs uppercase tracking-widest hover:border-[#D4A017] dark:hover:border-[#D4A017] hover:text-[#D4A017] dark:hover:text-[#D4A017] transition-all"
+            title="Alternar Modo"
+          >
+            {isDarkMode ? <Sun size={16} className="text-[#D4A017]" /> : <Moon size={16} />}
+            <span className="hidden lg:block">{isDarkMode ? 'Claro' : 'Escuro'}</span>
           </button>
-        </nav>
+        </div>
         
       </div>
     </header>
