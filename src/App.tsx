@@ -14,14 +14,18 @@ const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<ViewState>('home');
   const [selectedDisciplineId, setSelectedDisciplineId] = useState<string | null>(null);
   
-  // LÓGICA DO MODO ESCURO (Padrão: Claro)
+  // --- NOVA REGRA: Rolar sempre para o topo ao mudar de tela ---
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [currentView]);
+  // -------------------------------------------------------------
+
+  // LÓGICA DO MODO ESCURO (Padrão: Claro com Memória)
   const [isDarkMode, setIsDarkMode] = useState(() => {
     if (typeof window !== 'undefined') {
       const savedTheme = localStorage.getItem('theme');
-      // Só ativa o modo escuro se o utilizador já o tiver escolhido antes
       if (savedTheme === 'dark') return true;
     }
-    // Caso contrário, força SEMPRE o modo claro por padrão
     return false;
   });
 
@@ -66,7 +70,7 @@ const App: React.FC = () => {
 
       <footer className="bg-white dark:bg-[#1e293b] border-t border-gray-200 dark:border-slate-800/50 py-12 flex flex-col items-center gap-6 mt-auto transition-colors duration-500">
         
-        {/* LOGO RODAPÉ */}
+        {/* LOGO RODAPÉ NO CARTÃO BRANCO (MODO ESCURO) */}
         <div className="dark:bg-white dark:p-2 dark:rounded-2xl transition-all">
           <img 
             src="/logo.png" 
