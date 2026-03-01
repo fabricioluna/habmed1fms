@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Download, Loader2, Search, Plus, FileCheck, X, User, CheckCircle2 } from 'lucide-react';
+import { Download, Loader2, Search, Plus, FileCheck, X, User, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { db, storage } from '../firebase';
 import { collection, addDoc, query, where, onSnapshot, orderBy, serverTimestamp } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
@@ -20,8 +20,7 @@ const SummariesListView: React.FC<SummariesListViewProps> = ({ disciplineId, onB
   const [formData, setFormData] = useState({ title: '', author: '', description: '', type: 'summary' as any });
 
   useEffect(() => {
-    // IMPORTANTE: Se os materiais não aparecerem ao recarregar, abra o console (F12) 
-    // e clique no link de erro do Firebase para criar o ÍNDICE COMPOSTO.
+    // Escuta o banco de dados em tempo real. Se sumir ao recarregar, cheque o console F12 para o link do Índice.
     const q = query(
       collection(db, "materials"), 
       where("disciplineId", "==", disciplineId), 
@@ -30,13 +29,13 @@ const SummariesListView: React.FC<SummariesListViewProps> = ({ disciplineId, onB
     const unsubscribe = onSnapshot(q, (snapshot) => {
       setSummaries(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Summary[]);
     }, (error) => {
-      console.error("ERRO FIREBASE: Falta de Índice Composto.", error);
+      console.error("ERRO FIREBASE: Provável falta de índice. Veja o link no console.", error);
     });
     return () => unsubscribe();
   }, [disciplineId]);
 
   const handleConfirmUpload = async () => {
-    if (!selectedFile || !formData.title || !formData.author) return alert("Título e Autor são obrigatórios.");
+    if (!selectedFile || !formData.title || !formData.author) return alert("Preencha o Título e Autor.");
     try {
       setIsUploading(true);
       const sRef = ref(storage, `materials/${disciplineId}/${Date.now()}_${selectedFile.name}`);
@@ -52,27 +51,27 @@ const SummariesListView: React.FC<SummariesListViewProps> = ({ disciplineId, onB
         createdAt: serverTimestamp()
       });
 
-      alert("Enviado com sucesso!");
+      alert("Enviado com sucesso para a nuvem da turma!");
       setShowForm(false); setSelectedFile(null);
       setFormData({ title: '', author: '', description: '', type: 'summary' });
-    } catch (e) { alert("Erro ao enviar. Verifique as Rules."); }
+    } catch (e) { alert("Erro ao enviar. Verifique as Rules do Storage no Firebase."); }
     finally { setIsUploading(false); }
   };
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-8 animate-in fade-in slide-in-from-bottom-8 duration-700 pb-32">
-      <button onClick={onBack} className="text-[#003366] font-bold mb-8 flex items-center gap-2">← Voltar</button>
+      <button onClick={onBack} className="text-[#003366] font-bold mb-8 flex items-center gap-2 hover:text-[#D4A017] transition-all">← Voltar</button>
 
       <div className="bg-white rounded-[3rem] p-8 md:p-12 shadow-2xl border border-gray-100 mb-8 relative overflow-hidden text-left">
          <div className="relative z-10 flex flex-col md:flex-row gap-8 justify-between items-center">
            <div>
              <h1 className="text-4xl font-black text-[#003366] mb-2 tracking-tighter">Central de Materiais</h1>
-             <p className="text-gray-500 font-medium italic">Sincronização em tempo real com a nuvem.</p>
+             <p className="text-gray-500 font-medium italic leading-tight">Materiais compartilhados pela Turma IX.</p>
            </div>
            {!showForm ? (
-             <button onClick={() => setShowForm(true)} className="bg-[#003366] text-white px-8 py-4 rounded-2xl font-black uppercase text-xs flex items-center gap-2 shadow-xl"><Plus size={18} /><span>Enviar Material</span></button>
+             <button onClick={() => setShowForm(true)} className="bg-[#003366] text-white px-8 py-4 rounded-2xl font-black uppercase text-xs flex items-center gap-2 shadow-xl hover:bg-[#D4A017] transition-all"><Plus size={18} /><span>Enviar Material</span></button>
            ) : (
-             <button onClick={() => {setShowForm(false); setSelectedFile(null);}} className="bg-red-50 text-red-500 px-6 py-4 rounded-2xl font-black uppercase text-xs flex items-center gap-2"><X size={18} /><span>Cancelar</span></button>
+             <button onClick={() => {setShowForm(false); setSelectedFile(null);}} className="bg-red-50 text-red-500 px-6 py-4 rounded-2xl font-black uppercase text-xs flex items-center gap-2"><X size={18} /><span>Fechar</span></button>
            )}
          </div>
 
@@ -81,11 +80,11 @@ const SummariesListView: React.FC<SummariesListViewProps> = ({ disciplineId, onB
              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                <input type="text" placeholder="Legenda / Título" className="bg-white p-4 rounded-xl outline-none font-bold text-sm border focus:border-[#D4A017]" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} />
                <input type="text" placeholder="Autor(a)" className="bg-white p-4 rounded-xl outline-none font-bold text-sm border focus:border-[#D4A017]" value={formData.author} onChange={e => setFormData({...formData, author: e.target.value})} />
-               <select className="bg-white p-4 rounded-xl font-bold text-sm border" value={formData.type} onChange={e => setFormData({...formData, type: e.target.value})}>
+               <select className="bg-white p-4 rounded-xl font-bold text-sm border" value={formData.type} onChange={e => setFormData({...formData, type: e.target.value as any})}>
                  <option value="summary">Resumo</option><option value="script">Simulado</option><option value="other">Outro</option>
                </select>
              </div>
-             <textarea placeholder="Descrição (Opcional)" className="w-full bg-white p-4 rounded-xl mb-6 min-h-[80px] font-bold text-sm border outline-none focus:border-[#D4A017] resize-none" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} />
+             <textarea placeholder="Descrição breve do que há no arquivo (Opcional)" className="w-full bg-white p-4 rounded-xl mb-6 min-h-[80px] font-bold text-sm border outline-none focus:border-[#D4A017] resize-none" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} />
              
              {!selectedFile ? (
                <label className="w-full cursor-pointer bg-white border-2 border-[#003366] text-[#003366] p-6 rounded-2xl font-black uppercase text-xs text-center block hover:bg-[#003366] hover:text-white transition-all shadow-sm">
@@ -93,14 +92,14 @@ const SummariesListView: React.FC<SummariesListViewProps> = ({ disciplineId, onB
                  <input type="file" className="hidden" onChange={e => e.target.files && setSelectedFile(e.target.files[0])} accept=".pdf,.doc,.docx,.ppt,.pptx,.txt" />
                </label>
              ) : (
-               <div className="bg-white border-2 border-green-200 p-8 rounded-3xl text-center shadow-lg">
-                 <div className="text-green-600 font-black uppercase text-[10px] tracking-widest mb-2"><CheckCircle2 className="inline mr-1" /> Arquivo Selecionado</div>
+               <div className="bg-white border-2 border-green-200 p-8 rounded-3xl text-center shadow-lg animate-in zoom-in">
+                 <div className="text-green-600 font-black uppercase text-[10px] tracking-widest mb-2"><CheckCircle2 className="inline mr-1" size={16} /> Arquivo Selecionado</div>
                  <h4 className="text-[#003366] font-black text-lg mb-6">{selectedFile.name}</h4>
                  <div className="flex gap-3">
-                    <button onClick={() => setSelectedFile(null)} className="flex-1 bg-gray-100 text-gray-400 p-4 rounded-xl font-black uppercase text-xs">Trocar</button>
-                    <button onClick={handleConfirmUpload} disabled={isUploading} className="flex-[2] bg-[#003366] text-white p-4 rounded-xl font-black uppercase text-xs flex items-center justify-center gap-2">
+                    <button onClick={() => setSelectedFile(null)} className="flex-1 bg-gray-100 text-gray-400 p-4 rounded-xl font-black uppercase text-xs hover:bg-gray-200 transition-colors">Trocar</button>
+                    <button onClick={handleConfirmUpload} disabled={isUploading} className="flex-[2] bg-[#003366] text-white p-4 rounded-xl font-black uppercase text-xs flex items-center justify-center gap-2 shadow-md hover:bg-[#D4A017] transition-all">
                       {isUploading ? <Loader2 className="animate-spin" /> : <CheckCircle2 size={18} />}
-                      {isUploading ? 'A ENVIAR...' : 'CONFIRMAR E PUBLICAR'}
+                      {isUploading ? 'ENVIANDO...' : 'CONFIRMAR E PUBLICAR AGORA'}
                     </button>
                  </div>
                </div>
@@ -116,7 +115,7 @@ const SummariesListView: React.FC<SummariesListViewProps> = ({ disciplineId, onB
 
       <div className="space-y-4 text-left">
         {summaries.filter(s => s.title.toLowerCase().includes(searchTerm.toLowerCase())).map((s) => (
-          <div key={s.id} className="bg-white p-6 rounded-[2.5rem] border border-gray-100 flex items-start justify-between group hover:border-[#D4A017] transition-all">
+          <div key={s.id} className="bg-white p-6 rounded-[2.5rem] border border-gray-100 flex items-start justify-between group hover:border-[#D4A017] transition-all shadow-sm">
             <div className="flex items-start gap-5">
               <div className="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center text-[#003366] group-hover:bg-[#003366] group-hover:text-white transition-all shrink-0"><FileCheck size={28} /></div>
               <div>
@@ -133,6 +132,11 @@ const SummariesListView: React.FC<SummariesListViewProps> = ({ disciplineId, onB
             <a href={s.url} target="_blank" rel="noreferrer" className="bg-[#f4f7f6] hover:bg-[#D4A017] text-[#003366] p-4 rounded-xl transition-all shrink-0"><Download size={24} /></a>
           </div>
         ))}
+        {summaries.length === 0 && (
+          <div className="text-center py-20 bg-white rounded-[3rem] border-2 border-dashed border-gray-100 text-gray-400 font-bold uppercase text-[10px] tracking-[0.3em]">
+             Nenhum material na nuvem
+          </div>
+        )}
       </div>
     </div>
   );

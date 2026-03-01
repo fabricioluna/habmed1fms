@@ -13,8 +13,8 @@ const HomeView: React.FC<HomeViewProps> = ({ onNavigateToQuiz, onNavigateToCalcu
     <div className="max-w-5xl mx-auto px-4 py-12 animate-in fade-in zoom-in duration-500 text-center">
       <div className="mb-12">
         <span className="bg-[#D4A017]/20 text-[#003366] px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest mb-4 inline-block border border-[#D4A017]/30">Turma IX</span>
-        <h2 className="text-4xl md:text-5xl font-black text-[#003366] mb-2 tracking-tighter">Monitor Virtual</h2>
-        <p className="text-gray-500 text-sm font-medium">Plataforma central de estudos e simuladores clínicos.</p>
+        <h2 className="text-4xl md:text-5xl font-black text-[#003366] mb-2 tracking-tighter italic">Monitor Virtual</h2>
+        <p className="text-gray-500 text-sm font-medium">Sua central de estudos e simuladores clínicos.</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
@@ -33,7 +33,7 @@ const HomeView: React.FC<HomeViewProps> = ({ onNavigateToQuiz, onNavigateToCalcu
         <button onClick={() => onSelectOption('osce-ai-setup', 'hm1')} className="bg-[#003366] text-white p-8 rounded-[2rem] text-left hover:scale-[1.02] transition-all shadow-xl md:col-span-2 group relative">
           <div className="w-14 h-14 bg-white/10 rounded-2xl flex items-center justify-center text-3xl mb-4 group-hover:bg-[#D4A017] transition-all">🤖</div>
           <h3 className="text-2xl font-black uppercase tracking-tight mb-2 text-[#D4A017]">Paciente Virtual IA</h3>
-          <p className="text-xs opacity-80 font-medium italic">Pratique sua anamnese conversando com a IA.</p>
+          <p className="text-xs opacity-80 font-medium italic leading-relaxed">Pratique sua anamnese conversando com a inteligência artificial.</p>
         </button>
 
         <button onClick={() => onSelectOption('summaries-list', 'hm1')} className="bg-white p-8 rounded-[2rem] text-left hover:shadow-xl transition-all group border-2 border-transparent hover:border-[#D4A017]">
