@@ -12,9 +12,7 @@ const firebaseConfig = {
   measurementId: "G-7T14HNWMTP"
 };
 
-// Inicializa o Firebase
 const app = initializeApp(firebaseConfig);
 
-// Exportamos apenas o que vamos usar no portal
-export const db = getFirestore(app);      // Para salvar links e nomes dos materiais
-export const storage = getStorage(app);    // Para salvar os arquivos PDF/Imagens reais
+export const db = getFirestore(app);
+export const storage = getStorage(app);
