@@ -6,7 +6,6 @@ interface DisciplineViewProps {
   disciplines: SimulationInfo[];
   onBack: () => void;
   onSelectOption: (type: string) => void;
-  summaries?: any; 
 }
 
 const DisciplineView: React.FC<DisciplineViewProps> = ({ disciplineId, disciplines, onBack, onSelectOption }) => {
@@ -81,7 +80,8 @@ const DisciplineView: React.FC<DisciplineViewProps> = ({ disciplineId, disciplin
               <div className="w-8 h-8 rounded-full border-2 border-white/20 flex items-center justify-center group-hover:border-[#D4A017] group-hover:text-[#D4A017] font-black">→</div>
             </div>
             <h3 className="text-xl font-black uppercase tracking-tight mb-2 relative z-10 text-[#D4A017]">Paciente Virtual por IA</h3>
-            <p className="text-xs opacity-90 font-medium leading-relaxed relative z-10">Pratique sua anamnese conversando livremente pelo chat com um paciente simulado pela nossa Inteligência Artificial.</p>
+            {/* TEXTO ATUALIZADO AQUI TAMBÉM */}
+            <p className="text-xs opacity-90 font-medium leading-relaxed relative z-10">Pratique suas habilidades médicas conversando com a inteligência virtual.</p>
           </button>
         )}
 

@@ -33,7 +33,8 @@ const HomeView: React.FC<HomeViewProps> = ({ onNavigateToQuiz, onNavigateToCalcu
         <button onClick={() => onSelectOption('osce-ai-setup', 'hm1')} className="bg-[#003366] dark:bg-gradient-to-br dark:from-[#1e293b] dark:to-[#0f172a] text-white p-8 rounded-[2rem] text-left hover:scale-[1.02] transition-all shadow-xl md:col-span-2 group relative border-2 border-transparent dark:border-slate-800 dark:hover:border-[#D4A017]">
           <div className="w-14 h-14 bg-white/10 dark:bg-[#0f172a] rounded-2xl flex items-center justify-center text-3xl mb-4 group-hover:bg-[#D4A017] transition-all">🤖</div>
           <h3 className="text-2xl font-black uppercase tracking-tight mb-2 text-[#D4A017]">Paciente Virtual por IA</h3>
-          <p className="text-xs opacity-80 dark:text-slate-300 font-medium italic leading-relaxed">Pratique sua anamnese conversando com a inteligência artificial.</p>
+          {/* TEXTO ATUALIZADO AQUI */}
+          <p className="text-xs opacity-80 dark:text-slate-300 font-medium italic leading-relaxed">Pratique suas habilidades médicas conversando com a inteligência virtual.</p>
         </button>
 
         <button onClick={() => onSelectOption('summaries-list', 'hm1')} className="bg-white dark:bg-[#1e293b] p-8 rounded-[2rem] text-left hover:shadow-xl transition-all group border-2 border-transparent dark:border-slate-800 hover:border-[#D4A017] dark:hover:border-[#D4A017]">
@@ -49,12 +50,13 @@ const HomeView: React.FC<HomeViewProps> = ({ onNavigateToQuiz, onNavigateToCalcu
         </button>
       </div>
       
+      {/* BOTÕES COM A MESMA APARÊNCIA */}
       <div className="flex flex-col sm:flex-row gap-4 justify-center border-t border-gray-200 dark:border-slate-800/50 pt-10">
-        <button onClick={onNavigateToCalculators} className="bg-[#003366] dark:bg-[#1e293b] text-white dark:text-slate-200 p-5 rounded-3xl flex items-center gap-4 hover:bg-[#D4A017] dark:hover:bg-[#D4A017] dark:hover:text-[#0f172a] transition-all shadow-md">
+        <button onClick={onNavigateToCalculators} className="flex-1 max-w-[280px] mx-auto sm:mx-0 bg-[#003366] dark:bg-[#1e293b] text-white dark:text-slate-200 p-5 rounded-3xl flex items-center justify-center gap-4 hover:bg-[#D4A017] dark:hover:bg-[#D4A017] dark:hover:text-[#0f172a] transition-all shadow-md">
           <div className="text-2xl">🧮</div>
           <h4 className="font-black uppercase text-xs">Calculadora</h4>
         </button>
-        <button onClick={onNavigateToQuiz} className="bg-white dark:bg-[#1e293b] border-2 border-gray-100 dark:border-slate-700 dark:text-slate-200 p-5 rounded-3xl flex items-center gap-4 hover:border-[#D4A017] dark:hover:border-[#D4A017] transition-all">
+        <button onClick={onNavigateToQuiz} className="flex-1 max-w-[280px] mx-auto sm:mx-0 bg-[#003366] dark:bg-[#1e293b] text-white dark:text-slate-200 p-5 rounded-3xl flex items-center justify-center gap-4 hover:bg-[#D4A017] dark:hover:bg-[#D4A017] dark:hover:text-[#0f172a] transition-all shadow-md">
           <div className="text-2xl">🧭</div>
           <h4 className="font-black uppercase text-xs">Quiz Vocacional</h4>
         </button>
