@@ -4,11 +4,11 @@ import HomeView from './views/HomeView';
 import CareerQuiz from './components/CareerQuiz';
 import CalculatorsView from './views/CalculatorsView';
 import ReferencesView from './views/ReferencesView';
-import SummariesListView from './views/SummariesListView'; // NOVA IMPORTAÇÃO
+import SummariesListView from './views/SummariesListView';
+import AdminLoginView from './views/AdminLoginView';
+import AdminDashboardView from './views/AdminDashboardView';
 import type { ViewState } from './types';
 import { SIMULATIONS } from './constants';
-
-const APP_VERSION = "1.6.0 - Central de Materiais Ativa";
 
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<ViewState>('home');
@@ -34,42 +34,40 @@ const App: React.FC = () => {
           />
         )}
         
-        {currentView === 'career-quiz' && (
-          <CareerQuiz onBack={() => setCurrentView('home')} />
+        {currentView === 'career-quiz' && <CareerQuiz onBack={() => setCurrentView('home')} />}
+        {currentView === 'calculators' && <CalculatorsView onBack={() => setCurrentView('home')} />}
+        
+        {currentView === 'admin-login' && (
+          <AdminLoginView 
+            onLoginSuccess={() => setCurrentView('admin-dashboard')} 
+            onBack={() => setCurrentView('home')} 
+          />
         )}
 
-        {currentView === 'calculators' && (
-          <CalculatorsView onBack={() => setCurrentView('home')} />
+        {currentView === 'admin-dashboard' && (
+          <AdminDashboardView onLogout={() => setCurrentView('home')} />
         )}
 
         {currentView === 'references-view' && selectedDisciplineId && (
-          <ReferencesView 
-            disciplineId={selectedDisciplineId}
-            disciplines={SIMULATIONS}
-            onBack={() => setCurrentView('home')}
-          />
+          <ReferencesView disciplineId={selectedDisciplineId} disciplines={SIMULATIONS} onBack={() => setCurrentView('home')} />
         )}
 
-        {/* NOVO ECRÃ: CENTRAL DE MATERIAIS */}
         {currentView === 'summaries-list' && selectedDisciplineId && (
-          <SummariesListView 
-            disciplineId={selectedDisciplineId}
-            onBack={() => setCurrentView('home')}
-          />
+          <SummariesListView disciplineId={selectedDisciplineId} onBack={() => setCurrentView('home')} />
         )}
-
-        {/* As futuras telas (Quiz, Paciente IA) serão renderizadas aqui em breve! */}
-        
       </div>
 
-      <footer className="bg-white border-t py-8 flex flex-col items-center gap-2 mt-auto">
-        <div className="text-[#D4A017] text-[11px] font-black uppercase tracking-[0.2em] mb-1">
-          Desenvolvido por Fabrício Luna - Turma VIII
+      <footer className="bg-white border-t py-12 flex flex-col items-center gap-4 mt-auto">
+        <button 
+          onClick={() => setCurrentView('admin-login')}
+          className="text-gray-300 hover:text-[#003366] transition-colors text-[10px] font-black uppercase tracking-[0.3em]"
+        >
+          Acesso Restrito
+        </button>
+        <div className="text-center">
+          <div className="text-[#D4A017] text-[11px] font-black uppercase tracking-[0.2em] mb-1">Desenvolvido por Fabrício Luna - Turma VIII</div>
+          <div className="text-gray-400 text-[10px] font-bold uppercase tracking-widest">© 2026 Medicina do Sertão</div>
         </div>
-        <div className="text-gray-400 text-[10px] font-bold uppercase tracking-widest">
-          © 2026 Medicina do Sertão
-        </div>
-        <div className="text-[8px] text-gray-300 font-black uppercase tracking-tighter">Build {APP_VERSION}</div>
       </footer>
     </div>
   );

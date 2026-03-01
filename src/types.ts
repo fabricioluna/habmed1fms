@@ -1,7 +1,8 @@
 export type ViewState = 
   | 'home' 
   | 'discipline' 
-  | 'admin' 
+  | 'admin-login' 
+  | 'admin-dashboard' 
   | 'career-quiz' 
   | 'calculators'
   | 'quiz-setup'
@@ -33,10 +34,12 @@ export interface Summary {
   id: string;
   disciplineId: string;
   title: string;
+  author: string;
+  description?: string;
   url: string;
   type: 'summary' | 'script' | 'other';
   date: string;
   label: string;
-  isFolder?: boolean;
-  firebaseId?: string;
+  createdAt: any;
+  storagePath?: string; // Caminho para apagar o ficheiro real
 }

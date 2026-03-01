@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FileText, Download, Loader2, Search, Plus, FileCheck } from 'lucide-react';
+import { FileText, Download, Loader2, Search, Plus, FileCheck, X, User, AlignLeft } from 'lucide-react';
 import { db, storage } from '../firebase';
 import { collection, addDoc, query, where, onSnapshot, orderBy, serverTimestamp } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
@@ -14,9 +14,16 @@ const SummariesListView: React.FC<SummariesListViewProps> = ({ disciplineId, onB
   const [summaries, setSummaries] = useState<Summary[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isUploading, setIsUploading] = useState(false);
+  const [showForm, setShowForm] = useState(false);
+
+  const [formData, setFormData] = useState({
+    title: '',
+    author: '',
+    description: '', // Novo estado
+    type: 'summary' as 'summary' | 'script' | 'other'
+  });
 
   useEffect(() => {
-    // Busca em tempo real no Firestore
     const q = query(
       collection(db, "materials"),
       where("disciplineId", "==", disciplineId),
@@ -29,8 +36,6 @@ const SummariesListView: React.FC<SummariesListViewProps> = ({ disciplineId, onB
         ...doc.data()
       })) as Summary[];
       setSummaries(docs);
-    }, (error) => {
-      console.error("Erro no Firestore:", error);
     });
 
     return () => unsubscribe();
@@ -40,50 +45,54 @@ const SummariesListView: React.FC<SummariesListViewProps> = ({ disciplineId, onB
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Filtro rigoroso de extensões
+    if (!formData.title || !formData.author) {
+      alert("Por favor, preencha o Título e o Autor antes de enviar.");
+      e.target.value = '';
+      return;
+    }
+
     const allowedExtensions = ['pdf', 'doc', 'docx', 'ppt', 'pptx', 'txt'];
     const fileExtension = file.name.split('.').pop()?.toLowerCase() || '';
 
     if (!allowedExtensions.includes(fileExtension)) {
-      alert("⚠️ Formato não permitido. Use apenas PDF, DOC, DOCX ou PPT.");
+      alert("⚠️ Apenas documentos são permitidos (PDF, DOC, DOCX, PPT, TXT).");
       return;
     }
 
     try {
       setIsUploading(true);
-      
-      // 1. Upload para o Firebase Storage
-      const fileName = `${Date.now()}_${file.name}`;
-      const storageRef = ref(storage, `materials/${disciplineId}/${fileName}`);
-      
-      console.log("Iniciando upload para o Storage...");
+      const storageRef = ref(storage, `materials/${disciplineId}/${Date.now()}_${file.name}`);
       const snapshot = await uploadBytes(storageRef, file);
       const downloadURL = await getDownloadURL(snapshot.ref);
-      console.log("Upload concluído. URL:", downloadURL);
 
-      // 2. Registro no Firestore Database
       await addDoc(collection(db, "materials"), {
         disciplineId,
-        title: file.name,
+        title: formData.title,
+        author: formData.author,
+        description: formData.description, // Salva a descrição
         url: downloadURL,
-        type: 'summary',
+        type: formData.type,
         date: new Date().toLocaleDateString('pt-BR'),
         label: fileExtension.toUpperCase(),
         createdAt: serverTimestamp()
       });
 
-      alert("Material compartilhado com sucesso! 🚀");
-    } catch (error: any) {
-      console.error("Erro detalhado:", error);
-      alert(`Erro ao enviar: ${error.message}. Verifique as Rules do Storage no Firebase.`);
+      alert("Material compartilhado com sucesso! 📄");
+      setShowForm(false);
+      setFormData({ title: '', author: '', description: '', type: 'summary' });
+    } catch (error) {
+      console.error("Erro no upload:", error);
+      alert("Erro ao enviar. Verifique as Rules do Storage no Firebase.");
     } finally {
       setIsUploading(false);
-      e.target.value = ''; 
+      e.target.value = '';
     }
   };
 
   const filteredSummaries = summaries.filter(s => 
-    s.title.toLowerCase().includes(searchTerm.toLowerCase())
+    s.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    s.author.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    s.description?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -92,60 +101,129 @@ const SummariesListView: React.FC<SummariesListViewProps> = ({ disciplineId, onB
         <span className="mr-2 transition-transform group-hover:-translate-x-1">←</span> Voltar ao Início
       </button>
 
-      <div className="bg-white rounded-[3rem] p-8 md:p-14 shadow-2xl border border-gray-100 mb-8 relative overflow-hidden">
+      <div className="bg-white rounded-[3rem] p-8 md:p-14 shadow-2xl border border-gray-100 mb-8 relative overflow-hidden text-left">
          <div className="absolute top-0 right-0 w-64 h-64 bg-blue-50 rounded-full -mr-20 -mt-20 opacity-50"></div>
          <div className="relative z-10 flex flex-col md:flex-row gap-8 justify-between items-center md:items-start">
-           <div className="flex-grow text-left">
-             <span className="bg-[#D4A017]/20 text-[#003366] px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest mb-4 inline-block border border-[#D4A017]/30">
-               Nuvem da Turma IX
-             </span>
+           <div className="flex-grow">
+             <span className="bg-[#D4A017]/20 text-[#003366] px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest mb-4 inline-block border border-[#D4A017]/30">Nuvem da Turma IX</span>
              <h1 className="text-4xl md:text-5xl font-black text-[#003366] mb-4 tracking-tighter leading-tight">Central de Materiais</h1>
-             <p className="text-gray-600 text-lg font-medium">O upload é automático e o link fica disponível para todos na hora.</p>
+             <p className="text-gray-600 text-lg font-medium">Compartilhe e acesse materiais de estudo da turma.</p>
            </div>
            
-           <label className={`cursor-pointer bg-[#003366] text-white px-8 py-5 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl hover:bg-[#D4A017] hover:text-[#003366] transition-all flex items-center gap-3 shrink-0 ${isUploading ? 'opacity-50 pointer-events-none' : ''}`}>
-             {isUploading ? <Loader2 className="animate-spin" size={20} /> : <Plus size={20} />}
-             <span>{isUploading ? 'Processando...' : 'Enviar Documento'}</span>
-             <input type="file" className="hidden" onChange={handleFileUpload} disabled={isUploading} accept=".pdf,.doc,.docx,.ppt,.pptx,.txt" />
-           </label>
+           {!showForm ? (
+             <button onClick={() => setShowForm(true)} className="bg-[#003366] text-white px-8 py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl hover:bg-[#D4A017] hover:text-[#003366] transition-all flex items-center gap-2 shrink-0">
+               <Plus size={18} /><span>Enviar Material</span>
+             </button>
+           ) : (
+             <button onClick={() => setShowForm(false)} className="bg-red-50 text-red-500 px-6 py-4 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-red-500 hover:text-white transition-all flex items-center gap-2 shrink-0">
+               <X size={18} /><span>Cancelar</span>
+             </button>
+           )}
          </div>
+
+         {showForm && (
+           <div className="mt-8 p-6 bg-gray-50 rounded-[2rem] border-2 border-dashed border-gray-200 animate-in fade-in zoom-in duration-300">
+             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+               <div className="flex flex-col gap-2">
+                 <label className="text-[10px] font-black uppercase text-[#003366] ml-2">Título do Material</label>
+                 <input 
+                   type="text" 
+                   value={formData.title}
+                   onChange={(e) => setFormData({...formData, title: e.target.value})}
+                   placeholder="Ex: Resumo de Sinais Vitais"
+                   className="bg-white p-4 rounded-xl border border-gray-200 outline-none focus:border-[#D4A017] font-bold text-sm"
+                 />
+               </div>
+               <div className="flex flex-col gap-2">
+                 <label className="text-[10px] font-black uppercase text-[#003366] ml-2">Autor(a)</label>
+                 <input 
+                   type="text" 
+                   value={formData.author}
+                   onChange={(e) => setFormData({...formData, author: e.target.value})}
+                   placeholder="Seu nome"
+                   className="bg-white p-4 rounded-xl border border-gray-100 outline-none focus:border-[#D4A017] font-bold text-sm"
+                 />
+               </div>
+               <div className="flex flex-col gap-2">
+                 <label className="text-[10px] font-black uppercase text-[#003366] ml-2">Tipo</label>
+                 <select 
+                   value={formData.type}
+                   onChange={(e) => setFormData({...formData, type: e.target.value as any})}
+                   className="bg-white p-4 rounded-xl border border-gray-100 outline-none focus:border-[#D4A017] font-bold text-sm"
+                 >
+                   <option value="summary">Resumo</option>
+                   <option value="script">Simulado</option>
+                   <option value="other">Outro</option>
+                 </select>
+               </div>
+             </div>
+
+             <div className="flex flex-col gap-2 mb-6">
+                <label className="text-[10px] font-black uppercase text-[#003366] ml-2">Descrição (Opcional)</label>
+                <textarea 
+                  value={formData.description}
+                  onChange={(e) => setFormData({...formData, description: e.target.value})}
+                  placeholder="Conte um pouco sobre o que tem neste material..."
+                  className="bg-white p-4 rounded-xl border border-gray-100 outline-none focus:border-[#D4A017] font-bold text-sm min-h-[80px] resize-none"
+                />
+             </div>
+             
+             <label className={`w-full cursor-pointer bg-[#003366] text-white p-6 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl hover:bg-[#D4A017] hover:text-[#003366] transition-all flex items-center justify-center gap-3 ${isUploading ? 'opacity-50 pointer-events-none' : ''}`}>
+               {isUploading ? <Loader2 className="animate-spin" size={20} /> : <Plus size={20} />}
+               <span>{isUploading ? 'Processando Upload...' : 'Selecionar Arquivo e Finalizar'}</span>
+               <input type="file" className="hidden" onChange={handleFileUpload} disabled={isUploading} accept=".pdf,.doc,.docx,.ppt,.pptx,.txt" />
+             </label>
+           </div>
+         )}
       </div>
 
       <div className="mb-8 relative">
         <Search className="absolute inset-y-0 left-6 flex items-center text-gray-400 my-auto" size={20} />
         <input 
           type="text" 
-          placeholder="Pesquisar nos materiais da turma..." 
+          placeholder="Buscar por título, autor ou conteúdo..." 
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="w-full bg-white pl-14 pr-6 py-5 rounded-2xl border-2 border-transparent focus:border-[#D4A017] outline-none text-[#003366] font-bold shadow-sm"
         />
       </div>
 
-      <div className="grid grid-cols-1 gap-3">
+      <div className="grid grid-cols-1 gap-4 text-left">
         {filteredSummaries.length > 0 ? (
           filteredSummaries.map((summary) => (
-            <div key={summary.id} className="bg-white p-5 rounded-[1.5rem] border border-gray-100 flex items-center justify-between group hover:border-[#D4A017] transition-all">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center text-[#003366] group-hover:bg-[#003366] group-hover:text-white transition-all">
-                  <FileCheck size={24} />
-                </div>
-                <div>
-                  <h3 className="font-bold text-[#003366] text-sm md:text-base">{summary.title}</h3>
-                  <div className="flex gap-2 mt-1">
-                    <span className="text-[9px] font-black bg-gray-100 px-2 py-0.5 rounded text-gray-500">{summary.label}</span>
-                    <span className="text-[9px] font-bold text-gray-400 uppercase">{summary.date}</span>
+            <div key={summary.id} className="bg-white p-6 rounded-[2.5rem] border border-gray-100 shadow-sm hover:shadow-md transition-all group hover:border-[#D4A017]">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex items-start gap-5">
+                  <div className="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center text-[#003366] group-hover:bg-[#003366] group-hover:text-white transition-all shrink-0">
+                    <FileCheck size={28} />
+                  </div>
+                  <div>
+                    <h3 className="font-black text-[#003366] text-lg leading-tight">{summary.title}</h3>
+                    <div className="flex items-center gap-3 mt-1 mb-2">
+                      <div className="flex items-center gap-1 text-[10px] font-black text-[#D4A017] uppercase tracking-wider">
+                        <User size={12} /> {summary.author}
+                      </div>
+                      <span className="text-gray-300">|</span>
+                      <span className="text-[10px] font-bold text-gray-400 uppercase">{summary.date}</span>
+                      <span className="bg-gray-100 text-gray-500 px-2 py-0.5 rounded text-[9px] font-black">{summary.label}</span>
+                    </div>
+                    {summary.description && (
+                      <div className="flex items-start gap-2 bg-gray-50 p-3 rounded-xl border border-gray-100">
+                        <AlignLeft size={14} className="text-gray-400 shrink-0 mt-0.5" />
+                        <p className="text-xs text-gray-500 font-medium leading-relaxed">{summary.description}</p>
+                      </div>
+                    )}
                   </div>
                 </div>
+                <a href={summary.url} target="_blank" rel="noreferrer" className="bg-[#f4f7f6] hover:bg-[#D4A017] text-[#003366] p-4 rounded-xl transition-all shrink-0">
+                  <Download size={24} />
+                </a>
               </div>
-              <a href={summary.url} target="_blank" rel="noreferrer" className="bg-[#f4f7f6] hover:bg-[#D4A017] text-[#003366] p-3 rounded-xl transition-all">
-                <Download size={20} />
-              </a>
             </div>
           ))
         ) : (
-          <div className="text-center py-20 bg-white rounded-[3rem] border-2 border-dashed border-gray-100 text-gray-400 font-bold uppercase text-xs tracking-[0.2em]">
-            Nenhum material na nuvem
+          <div className="text-center py-20 bg-white rounded-[3rem] border-2 border-dashed border-gray-100 text-gray-400 font-bold uppercase text-xs tracking-widest">
+            Nenhum material compartilhado ainda.
           </div>
         )}
       </div>
