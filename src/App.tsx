@@ -40,6 +40,12 @@ const App: React.FC = () => {
     }
   }, [isDarkMode]);
 
+  // Função centralizada para lidar com o botão voltar no Header
+  const handleBack = () => {
+    setCurrentView('home');
+    setSelectedDisciplineId(null);
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-[#f4f7f6] dark:bg-[#0f172a] text-gray-900 dark:text-slate-200 font-sans transition-colors duration-500">
       <Header 
@@ -49,6 +55,9 @@ const App: React.FC = () => {
         }} 
         isDarkMode={isDarkMode}
         toggleDarkMode={() => setIsDarkMode(!isDarkMode)}
+        // Novas props passadas para o Header saber quando mostrar o botão voltar
+        currentView={currentView}
+        onBack={handleBack}
       />
 
       <div className="flex-grow">
@@ -60,12 +69,12 @@ const App: React.FC = () => {
             onSelectOption={(option, id) => { setSelectedDisciplineId(id); setCurrentView(option as ViewState); }}
           />
         )}
-        {currentView === 'career-quiz' && <CareerQuiz onBack={() => setCurrentView('home')} />}
-        {currentView === 'calculators' && <CalculatorsView onBack={() => setCurrentView('home')} />}
-        {currentView === 'admin-login' && <AdminLoginView onLoginSuccess={() => setCurrentView('admin-dashboard')} onBack={() => setCurrentView('home')} />}
-        {currentView === 'admin-dashboard' && <AdminDashboardView onLogout={() => setCurrentView('home')} />}
-        {currentView === 'summaries-list' && selectedDisciplineId && <SummariesListView disciplineId={selectedDisciplineId} onBack={() => setCurrentView('home')} />}
-        {currentView === 'references-view' && selectedDisciplineId && <ReferencesView disciplineId={selectedDisciplineId} disciplines={SIMULATIONS} onBack={() => setCurrentView('home')} />}
+        {currentView === 'career-quiz' && <CareerQuiz onBack={handleBack} />}
+        {currentView === 'calculators' && <CalculatorsView onBack={handleBack} />}
+        {currentView === 'admin-login' && <AdminLoginView onLoginSuccess={() => setCurrentView('admin-dashboard')} onBack={handleBack} />}
+        {currentView === 'admin-dashboard' && <AdminDashboardView onLogout={handleBack} />}
+        {currentView === 'summaries-list' && selectedDisciplineId && <SummariesListView disciplineId={selectedDisciplineId} onBack={handleBack} />}
+        {currentView === 'references-view' && selectedDisciplineId && <ReferencesView disciplineId={selectedDisciplineId} disciplines={SIMULATIONS} onBack={handleBack} />}
       </div>
 
       <footer className="bg-white dark:bg-[#1e293b] border-t border-gray-200 dark:border-slate-800/50 py-12 flex flex-col items-center gap-6 mt-auto transition-colors duration-500">
