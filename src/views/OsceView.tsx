@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Clock, AlertTriangle, CheckCircle, XCircle, Skull, Play, RotateCcw, Shuffle, ListFilter } from 'lucide-react';
+import { ArrowLeft, Clock, AlertTriangle, CheckCircle, XCircle, Skull, Play, RotateCcw, Shuffle, ListFilter, X, ChevronUp, ChevronDown } from 'lucide-react';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../firebase';
 import type { OsceStation, OsceAction, OsceTheme } from '../types';
@@ -79,12 +79,36 @@ export const OsceView: React.FC<OsceViewProps> = ({ onBack }) => {
   // AÇÕES DURANTE A SIMULAÇÃO
   const handleActionClick = (action: OsceAction) => {
     if (isFinished) return;
-    if (selectedActions.find(a => a.id === action.id)) {
-      setSelectedActions(prev => prev.filter(a => a.id !== action.id));
-    } else {
+    // Se não está na lista, adiciona no final
+    if (!selectedActions.find(a => a.id === action.id)) {
       setSelectedActions(prev => [...prev, action]);
     }
   };
+
+  // --- NOVAS FUNÇÕES: MOVER E REMOVER AÇÕES ---
+  const handleRemoveAction = (actionId: string) => {
+    if (isFinished) return;
+    setSelectedActions(prev => prev.filter(a => a.id !== actionId));
+  };
+
+  const handleMoveAction = (index: number, direction: 'up' | 'down') => {
+    if (isFinished) return;
+    
+    const newActions = [...selectedActions];
+    if (direction === 'up' && index > 0) {
+      // Troca com o de cima
+      const temp = newActions[index];
+      newActions[index] = newActions[index - 1];
+      newActions[index - 1] = temp;
+    } else if (direction === 'down' && index < newActions.length - 1) {
+      // Troca com o de baixo
+      const temp = newActions[index];
+      newActions[index] = newActions[index + 1];
+      newActions[index + 1] = temp;
+    }
+    setSelectedActions(newActions);
+  };
+  // --------------------------------------------
 
   const handleFinish = () => {
     setIsFinished(true);
@@ -200,10 +224,9 @@ export const OsceView: React.FC<OsceViewProps> = ({ onBack }) => {
   // Função avançada para checar se a ação correta foi selecionada fora de ordem
   const checkIfOutOfOrder = (actionId: string) => {
     const targetIdxUser = correctSelected.findIndex(a => a.id === actionId);
-    if (targetIdxUser <= 0) return false; // A primeira ação do usuário nunca está "fora de ordem" em relação a si mesma
+    if (targetIdxUser <= 0) return false; 
     const targetIdxExpected = correctExpected.findIndex(a => a.id === actionId);
 
-    // Checa se alguma ação que o usuário selecionou ANTES dessa, deveria estar DEPOIS no gabarito
     for (let i = 0; i < targetIdxUser; i++) {
       const prevActionId = correctSelected[i].id;
       const prevIdxExpected = correctExpected.findIndex(a => a.id === prevActionId);
@@ -249,11 +272,13 @@ export const OsceView: React.FC<OsceViewProps> = ({ onBack }) => {
             <div className="flex flex-wrap gap-2.5">
               {shuffledActions.map(action => {
                 const isSelected = selectedActions.some(a => a.id === action.id);
+                // O botão na nuvem agora fica desabilitado visualmente se já foi escolhido
                 return (
                   <button
                     key={action.id}
                     onClick={() => handleActionClick(action)}
-                    className={`text-left text-[13px] font-bold px-4 py-3 rounded-xl transition-all border-2 ${isSelected ? 'bg-[#003366] border-[#003366] text-white shadow-md transform scale-95 opacity-50' : 'bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 text-gray-700 dark:text-slate-300 hover:border-[#D4A017] shadow-sm'}`}
+                    disabled={isSelected}
+                    className={`text-left text-[13px] font-bold px-4 py-3 rounded-xl transition-all border-2 ${isSelected ? 'bg-gray-100 dark:bg-slate-800 border-gray-200 dark:border-slate-700 text-gray-400 dark:text-slate-600 cursor-not-allowed opacity-60' : 'bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 text-gray-700 dark:text-slate-300 hover:border-[#D4A017] shadow-sm'}`}
                   >
                     {action.text}
                   </button>
@@ -264,18 +289,57 @@ export const OsceView: React.FC<OsceViewProps> = ({ onBack }) => {
 
           <div className="lg:col-span-2 bg-white dark:bg-slate-900/50 p-6 rounded-[2rem] border border-gray-200 dark:border-slate-800 flex flex-col h-full shadow-sm">
             <h3 className="text-sm font-black text-[#003366] dark:text-slate-200 mb-4">Sua Conduta (Ordem Cronológica)</h3>
+            
             <div className="flex-grow space-y-3 overflow-y-auto max-h-[450px] mb-6 pr-2">
               {selectedActions.length === 0 ? (
                 <p className="text-xs font-medium text-gray-400 italic text-center mt-10">Clique nas ações ao lado para montar sua conduta.</p>
               ) : (
                 selectedActions.map((action, index) => (
-                  <div key={action.id} className="flex items-start gap-3 bg-gray-50 dark:bg-slate-800 p-3 rounded-xl shadow-sm border border-gray-100 dark:border-slate-700 animate-in slide-in-from-left-2">
-                    <span className="w-6 h-6 rounded-full bg-[#003366] text-white flex items-center justify-center text-[10px] font-black shrink-0 mt-0.5">{index + 1}</span>
-                    <span className="text-[13px] font-bold text-gray-700 dark:text-slate-200">{action.text}</span>
+                  <div key={action.id} className="flex items-center gap-3 bg-gray-50 dark:bg-slate-800 p-2 pl-3 rounded-xl shadow-sm border border-gray-100 dark:border-slate-700 animate-in slide-in-from-left-2">
+                    
+                    {/* Número */}
+                    <span className="w-6 h-6 rounded-full bg-[#003366] text-white flex items-center justify-center text-[10px] font-black shrink-0">
+                      {index + 1}
+                    </span>
+                    
+                    {/* Texto da Ação */}
+                    <span className="text-[12px] font-bold text-gray-700 dark:text-slate-200 flex-grow leading-tight py-1">
+                      {action.text}
+                    </span>
+
+                    {/* Controles: Mover Cima/Baixo e Excluir */}
+                    <div className="flex items-center gap-1 shrink-0 ml-2">
+                      <div className="flex flex-col gap-0.5 mr-1">
+                        <button 
+                          onClick={() => handleMoveAction(index, 'up')}
+                          disabled={index === 0}
+                          className="p-1 rounded bg-gray-200 dark:bg-slate-700 text-gray-600 dark:text-slate-300 disabled:opacity-30 hover:bg-gray-300 dark:hover:bg-slate-600 transition-colors"
+                          title="Mover para Cima"
+                        >
+                          <ChevronUp size={12} strokeWidth={3}/>
+                        </button>
+                        <button 
+                          onClick={() => handleMoveAction(index, 'down')}
+                          disabled={index === selectedActions.length - 1}
+                          className="p-1 rounded bg-gray-200 dark:bg-slate-700 text-gray-600 dark:text-slate-300 disabled:opacity-30 hover:bg-gray-300 dark:hover:bg-slate-600 transition-colors"
+                          title="Mover para Baixo"
+                        >
+                          <ChevronDown size={12} strokeWidth={3}/>
+                        </button>
+                      </div>
+                      <button 
+                        onClick={() => handleRemoveAction(action.id)}
+                        className="p-1.5 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-500 hover:bg-red-500 hover:text-white transition-colors"
+                        title="Remover Ação"
+                      >
+                        <X size={16} />
+                      </button>
+                    </div>
                   </div>
                 ))
               )}
             </div>
+            
             <button 
               onClick={handleFinish}
               className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-black uppercase text-xs py-4 rounded-2xl transition-all shadow-lg flex justify-center items-center gap-2 mt-auto"
@@ -286,7 +350,7 @@ export const OsceView: React.FC<OsceViewProps> = ({ onBack }) => {
         </div>
       ) : (
 
-        /* TELA DE FEEDBACK (NOVO LAYOUT LADO A LADO) */
+        /* TELA DE FEEDBACK (LADO A LADO) */
         <div className="animate-in zoom-in-95 duration-500">
           
           <div className={`p-8 rounded-[2rem] text-center mb-8 flex flex-col items-center shadow-lg ${isFatal ? 'bg-red-600 text-white' : score >= 70 ? 'bg-emerald-500 text-white' : 'bg-orange-500 text-white'}`}>
