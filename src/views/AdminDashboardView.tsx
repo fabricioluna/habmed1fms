@@ -1,89 +1,295 @@
 import React, { useState, useEffect } from 'react';
+import { LogOut, Plus, Trash2, Upload, FileText, Activity, Layers, AlertCircle } from 'lucide-react';
+import { collection, addDoc, getDocs, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '../firebase';
-import { collection, query, onSnapshot, orderBy, deleteDoc, doc } from 'firebase/firestore';
-import { Trash2, ShieldCheck, Database, LogOut, FileText } from 'lucide-react';
-import type { Summary } from '../types';
+import type { OsceTheme, OsceStation, OsceAction } from '../types';
 
 interface AdminDashboardViewProps {
   onLogout: () => void;
 }
 
-const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({ onLogout }) => {
-  const [materials, setMaterials] = useState<Summary[]>([]);
+export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({ onLogout }) => {
+  const [activeTab, setActiveTab] = useState<'resumos' | 'osce-themes' | 'osce-stations'>('osce-stations');
+  
+  // Estados para Temas OSCE
+  const [themes, setThemes] = useState<OsceTheme[]>([]);
+  const [newThemeName, setNewThemeName] = useState('');
+  const [newThemeDesc, setNewThemeDesc] = useState('');
+  
+  // Estados para Estações OSCE
+  const [stations, setStations] = useState<OsceStation[]>([]);
+  const [selectedThemeId, setSelectedThemeId] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadMessage, setUploadMessage] = useState('');
 
+  // Carregar dados iniciais
   useEffect(() => {
-    const q = query(collection(db, "materials"), orderBy("createdAt", "desc"));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const docs = snapshot.docs.map(d => ({ id: d.id, ...d.data() })) as Summary[];
-      setMaterials(docs);
-    });
-    return () => unsubscribe();
+    fetchThemes();
+    fetchStations();
   }, []);
 
-  const handleDelete = async (materialId: string) => {
-    if (!window.confirm("Tem certeza que deseja apagar este material permanentemente?")) return;
+  const fetchThemes = async () => {
+    const snapshot = await getDocs(collection(db, 'osce_themes'));
+    setThemes(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as OsceTheme)));
+  };
 
-    try {
-      await deleteDoc(doc(db, "materials", materialId));
-      alert("Material removido com sucesso!");
-    } catch (error) {
-      console.error("Erro ao remover:", error);
-      alert("Erro ao remover material.");
+  const fetchStations = async () => {
+    const snapshot = await getDocs(collection(db, 'osce_stations'));
+    setStations(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as OsceStation)));
+  };
+
+  // --- GERENCIAMENTO DE TEMAS ---
+  const handleAddTheme = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newThemeName) return;
+    await addDoc(collection(db, 'osce_themes'), { name: newThemeName, description: newThemeDesc });
+    setNewThemeName('');
+    setNewThemeDesc('');
+    fetchThemes();
+  };
+
+  const handleDeleteTheme = async (id: string) => {
+    if (window.confirm('Tem certeza que deseja excluir este tema?')) {
+      await deleteDoc(doc(db, 'osce_themes', id));
+      fetchThemes();
+    }
+  };
+
+  // --- GERENCIAMENTO DE ESTAÇÕES (CSV UPLOAD) ---
+  const handleCsvUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!selectedThemeId) {
+      alert("Por favor, selecione um Tema OSCE antes de carregar o arquivo.");
+      e.target.value = '';
+      return;
+    }
+
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    setUploadMessage('Processando CSV...');
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      try {
+        const text = event.target?.result as string;
+        const rows = text.split('\n').filter(row => row.trim() !== '');
+        
+        let successCount = 0;
+
+        // Pula o cabeçalho (i=1)
+        for (let i = 1; i < rows.length; i++) {
+          const columns = rows[i].split(';');
+          if (columns.length < 7) continue;
+
+          const [titulo, cenario, corretas, incorretas, fatais, debriefing, tempo] = columns;
+
+          const actions: OsceAction[] = [];
+          
+          // Processa as ações separadas por "|"
+          corretas.split('|').forEach(a => { if (a.trim()) actions.push({ id: crypto.randomUUID(), text: a.trim(), type: 'correct' }) });
+          incorretas.split('|').forEach(a => { if (a.trim()) actions.push({ id: crypto.randomUUID(), text: a.trim(), type: 'incorrect' }) });
+          fatais.split('|').forEach(a => { if (a.trim()) actions.push({ id: crypto.randomUUID(), text: a.trim(), type: 'fatal' }) });
+
+          const newStation: Omit<OsceStation, 'id'> = {
+            themeId: selectedThemeId,
+            title: titulo.trim(),
+            scenario: cenario.trim(),
+            actions,
+            debriefing: debriefing.trim(),
+            timeLimit: parseInt(tempo.trim()) || 10
+          };
+
+          await addDoc(collection(db, 'osce_stations'), newStation);
+          successCount++;
+        }
+
+        setUploadMessage(`Sucesso! ${successCount} estações carregadas.`);
+        fetchStations();
+      } catch (error) {
+        console.error(error);
+        setUploadMessage('Erro ao processar o CSV. Verifique o formato.');
+      } finally {
+        setIsUploading(false);
+      }
+    };
+    reader.readAsText(file, 'UTF-8');
+  };
+
+  const handleDeleteStation = async (id: string) => {
+    if (window.confirm('Excluir esta estação clínica?')) {
+      await deleteDoc(doc(db, 'osce_stations', id));
+      fetchStations();
     }
   };
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8 animate-in fade-in duration-700">
-      <div className="flex justify-between items-center mb-10">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 bg-[#003366] text-white rounded-2xl flex items-center justify-center shadow-lg">
-            <ShieldCheck size={24} />
-          </div>
-          <div>
-            <h1 className="text-2xl font-black text-[#003366] tracking-tighter">Painel de Gestão</h1>
-            <p className="text-[10px] font-black text-[#D4A017] uppercase tracking-[0.2em]">Administrador: Luna</p>
-          </div>
+    <div className="max-w-6xl mx-auto p-6 md:p-10 animate-in fade-in duration-500">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+        <div>
+          <h2 className="text-3xl font-black text-[#003366] dark:text-slate-100 tracking-tighter">Painel de Controle</h2>
+          <p className="text-sm text-gray-500 dark:text-slate-400 font-medium">Gestão de Conteúdo e Simuladores Práticos</p>
         </div>
-        <button onClick={onLogout} className="bg-red-50 text-red-500 px-6 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center gap-2 hover:bg-red-500 hover:text-white transition-all">
-          Sair <LogOut size={14} />
+        <button onClick={onLogout} className="flex items-center gap-2 bg-red-50 text-red-600 px-4 py-2 rounded-xl font-bold text-sm hover:bg-red-100 transition-colors">
+          <LogOut size={16} /> Sair
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-        <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm">
-          <div className="text-gray-400 mb-2"><Database size={20} /></div>
-          <div className="text-3xl font-black text-[#003366]">{materials.length}</div>
-          <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Materiais na Nuvem</div>
-        </div>
+      {/* ABAS */}
+      <div className="flex gap-4 mb-8 border-b border-gray-200 dark:border-slate-800 pb-px overflow-x-auto">
+        <button 
+          onClick={() => setActiveTab('resumos')} 
+          className={`flex items-center gap-2 pb-3 px-2 font-bold text-sm border-b-2 transition-colors whitespace-nowrap ${activeTab === 'resumos' ? 'border-[#D4A017] text-[#003366] dark:text-[#D4A017]' : 'border-transparent text-gray-400 hover:text-gray-600 dark:hover:text-slate-300'}`}
+        >
+          <FileText size={18}/> Resumos Teóricos
+        </button>
+        <button 
+          onClick={() => setActiveTab('osce-themes')} 
+          className={`flex items-center gap-2 pb-3 px-2 font-bold text-sm border-b-2 transition-colors whitespace-nowrap ${activeTab === 'osce-themes' ? 'border-[#D4A017] text-[#003366] dark:text-[#D4A017]' : 'border-transparent text-gray-400 hover:text-gray-600 dark:hover:text-slate-300'}`}
+        >
+          <Layers size={18}/> Temas OSCE
+        </button>
+        <button 
+          onClick={() => setActiveTab('osce-stations')} 
+          className={`flex items-center gap-2 pb-3 px-2 font-bold text-sm border-b-2 transition-colors whitespace-nowrap ${activeTab === 'osce-stations' ? 'border-[#D4A017] text-[#003366] dark:text-[#D4A017]' : 'border-transparent text-gray-400 hover:text-gray-600 dark:hover:text-slate-300'}`}
+        >
+          <Activity size={18}/> Estações Clínicas (CSV)
+        </button>
       </div>
 
-      <h2 className="text-sm font-black text-[#003366] uppercase tracking-[0.2em] mb-6 ml-4">Gerenciar Materiais</h2>
-      
-      <div className="space-y-3">
-        {materials.map((m) => (
-          <div key={m.id} className="bg-white p-5 rounded-3xl border border-gray-100 flex items-center justify-between group hover:border-red-200 transition-all">
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 bg-gray-50 text-gray-400 rounded-xl flex items-center justify-center">
-                <FileText size={20} />
+      {/* CONTEÚDO: TEMAS OSCE */}
+      {activeTab === 'osce-themes' && (
+        <div className="grid md:grid-cols-3 gap-8">
+          <div className="md:col-span-1 bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-sm border border-gray-100 dark:border-slate-800">
+            <h3 className="font-black text-[#003366] dark:text-slate-100 mb-4">Novo Tema</h3>
+            <form onSubmit={handleAddTheme} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-gray-500 mb-1">Nome do Tema</label>
+                <input type="text" required value={newThemeName} onChange={(e) => setNewThemeName(e.target.value)} className="w-full bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm dark:text-white outline-none focus:border-[#D4A017] transition-all" placeholder="Ex: Cardiologia" />
               </div>
               <div>
-                <h3 className="font-bold text-[#003366] text-sm">{m.title}</h3>
-                <p className="text-[10px] font-medium text-gray-400">Por: {m.author} • {m.date}</p>
+                <label className="block text-xs font-bold text-gray-500 mb-1">Descrição</label>
+                <input type="text" value={newThemeDesc} onChange={(e) => setNewThemeDesc(e.target.value)} className="w-full bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm dark:text-white outline-none focus:border-[#D4A017] transition-all" placeholder="Ex: Casos de Dor Torácica..." />
               </div>
-            </div>
-            <button 
-              onClick={() => handleDelete(m.id)}
-              className="text-gray-300 hover:text-red-500 p-3 rounded-xl transition-colors"
-              title="Apagar Material"
-            >
-              <Trash2 size={20} />
-            </button>
+              <button type="submit" className="w-full bg-[#003366] text-white font-bold text-sm px-4 py-3 rounded-xl hover:bg-[#D4A017] transition-all flex justify-center items-center gap-2">
+                <Plus size={18} /> Adicionar Tema
+              </button>
+            </form>
           </div>
-        ))}
-        {materials.length === 0 && (
-          <div className="text-center py-20 text-gray-300 font-bold uppercase text-xs">Nenhum material para gerenciar.</div>
-        )}
-      </div>
+
+          <div className="md:col-span-2 space-y-4">
+            <h3 className="font-black text-gray-400 dark:text-slate-500 text-xs uppercase tracking-widest">Temas Cadastrados ({themes.length})</h3>
+            {themes.map(theme => (
+              <div key={theme.id} className="bg-white dark:bg-slate-900 p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-800 flex justify-between items-center group">
+                <div>
+                  <h4 className="font-bold text-[#003366] dark:text-blue-400">{theme.name}</h4>
+                  <p className="text-xs text-gray-500">{theme.description}</p>
+                </div>
+                <button onClick={() => theme.id && handleDeleteTheme(theme.id)} className="text-gray-300 hover:text-red-500 transition-colors p-2">
+                  <Trash2 size={18} />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* CONTEÚDO: ESTAÇÕES OSCE VIA CSV */}
+      {activeTab === 'osce-stations' && (
+        <div className="grid md:grid-cols-3 gap-8">
+          
+          {/* Formulário de Upload */}
+          <div className="md:col-span-1 bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-sm border border-gray-100 dark:border-slate-800">
+            <h3 className="font-black text-[#003366] dark:text-slate-100 mb-4 flex items-center gap-2"><Upload size={18}/> Importar CSV</h3>
+            
+            <div className="space-y-6">
+              <div>
+                <label className="block text-xs font-bold text-gray-500 mb-2">1. Selecione o Tema (Obrigatório)</label>
+                <select 
+                  value={selectedThemeId} 
+                  onChange={(e) => setSelectedThemeId(e.target.value)}
+                  className="w-full bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm dark:text-white outline-none focus:border-[#D4A017] transition-all font-medium"
+                >
+                  <option value="" disabled>-- Escolha um tema --</option>
+                  {themes.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                </select>
+              </div>
+
+              <div className={`p-4 rounded-2xl border-2 border-dashed transition-all text-center ${selectedThemeId ? 'border-blue-300 bg-blue-50/50 dark:border-blue-800 dark:bg-slate-800' : 'border-gray-200 bg-gray-50 dark:border-slate-700 dark:bg-slate-800 opacity-50 cursor-not-allowed'}`}>
+                <input 
+                  type="file" 
+                  accept=".csv" 
+                  disabled={!selectedThemeId || isUploading}
+                  onChange={handleCsvUpload}
+                  className="hidden" 
+                  id="csv-upload"
+                />
+                <label htmlFor="csv-upload" className={`flex flex-col items-center gap-2 ${selectedThemeId && !isUploading ? 'cursor-pointer text-[#003366] dark:text-blue-400 hover:text-[#D4A017]' : 'text-gray-400'}`}>
+                  <FileText size={32} />
+                  <span className="text-sm font-bold">{isUploading ? 'Processando...' : 'Clique para subir o CSV'}</span>
+                  <span className="text-[10px] text-gray-500">Separado por Ponto e Vírgula (;)</span>
+                </label>
+              </div>
+              
+              {uploadMessage && (
+                <div className="text-xs font-bold text-center p-2 rounded-lg bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400">
+                  {uploadMessage}
+                </div>
+              )}
+            </div>
+
+            <div className="mt-8 bg-blue-50 dark:bg-slate-800 p-4 rounded-xl border border-blue-100 dark:border-slate-700">
+              <h4 className="text-[10px] font-black uppercase text-[#003366] dark:text-blue-300 mb-2 flex items-center gap-1"><AlertCircle size={12}/> Formato do CSV</h4>
+              <p className="text-[10px] text-gray-600 dark:text-slate-400 leading-relaxed mb-2">
+                O arquivo deve conter as seguintes colunas separadas por <strong>ponto e vírgula (;)</strong>. As ações múltiplas devem ser separadas por <strong>pipe (|)</strong>.
+              </p>
+              <code className="block bg-white dark:bg-slate-900 p-2 rounded text-[9px] text-emerald-600 dark:text-emerald-400 overflow-x-auto whitespace-nowrap">
+                Titulo; Cenario; Corretas(A|B); Incorretas(C|D); Fatais(E|F); Debriefing; Tempo(Minutos)
+              </code>
+            </div>
+          </div>
+
+          {/* Lista de Estações */}
+          <div className="md:col-span-2 space-y-4">
+            <h3 className="font-black text-gray-400 dark:text-slate-500 text-xs uppercase tracking-widest">Estações Carregadas ({stations.length})</h3>
+            
+            {stations.length === 0 ? (
+              <div className="text-center p-10 bg-white dark:bg-slate-900 rounded-3xl border border-gray-100 dark:border-slate-800">
+                <p className="text-sm text-gray-400 font-medium">Nenhuma estação cadastrada. Suba um arquivo CSV.</p>
+              </div>
+            ) : (
+              <div className="grid gap-3">
+                {stations.map(station => {
+                  const themeName = themes.find(t => t.id === station.themeId)?.name || 'Tema Desconhecido';
+                  return (
+                    <div key={station.id} className="bg-white dark:bg-slate-900 p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-800 flex justify-between items-center group">
+                      <div>
+                        <span className="text-[9px] font-black uppercase tracking-widest text-[#D4A017]">{themeName}</span>
+                        <h4 className="font-bold text-[#003366] dark:text-slate-100 mt-0.5">{station.title}</h4>
+                        <div className="flex gap-3 mt-1.5 text-[10px] font-bold text-gray-400">
+                          <span>{station.actions.length} Ações</span>
+                          <span>⏱ {station.timeLimit} min</span>
+                        </div>
+                      </div>
+                      <button onClick={() => station.id && handleDeleteStation(station.id)} className="w-8 h-8 flex items-center justify-center rounded-lg bg-red-50 text-red-500 hover:bg-red-500 hover:text-white transition-colors">
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Aba de Resumos Teóricos (Futuro/Mantida a estrutura para não quebrar) */}
+      {activeTab === 'resumos' && (
+        <div className="bg-white dark:bg-slate-900 p-10 rounded-3xl shadow-sm text-center border border-gray-100 dark:border-slate-800">
+          <p className="text-gray-500 dark:text-slate-400 font-medium">Módulo de gestão de resumos (Seu código existente pode ser inserido aqui).</p>
+        </div>
+      )}
+
     </div>
   );
 };

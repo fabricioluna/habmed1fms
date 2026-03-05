@@ -43,3 +43,27 @@ export interface Summary {
   size?: string; // NOVO CAMPO ADICIONADO AQUI
   createdAt: any;
 }
+
+// --- NOVAS INTERFACES DO SIMULADOR OSCE ---
+
+export interface OsceTheme {
+  id?: string;
+  name: string;
+  description: string;
+}
+
+export interface OsceAction {
+  id: string;
+  text: string;
+  type: 'correct' | 'incorrect' | 'fatal';
+}
+
+export interface OsceStation {
+  id?: string;
+  themeId: string;
+  title: string;
+  scenario: string;
+  actions: OsceAction[];
+  debriefing: string;
+  timeLimit: number; // em minutos
+}
