@@ -7,6 +7,7 @@ import ReferencesView from './views/ReferencesView';
 import SummariesListView from './views/SummariesListView';
 import AdminLoginView from './views/AdminLoginView';
 import AdminDashboardView from './views/AdminDashboardView';
+import OsceView from './views/OsceView'; // NOVA IMPORTAÇÃO
 import type { ViewState } from './types';
 import { SIMULATIONS } from './constants';
 
@@ -14,13 +15,10 @@ const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<ViewState>('home');
   const [selectedDisciplineId, setSelectedDisciplineId] = useState<string | null>(null);
   
-  // --- NOVA REGRA: Rolar sempre para o topo ao mudar de tela ---
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [currentView]);
-  // -------------------------------------------------------------
 
-  // LÓGICA DO MODO ESCURO (Padrão: Claro com Memória)
   const [isDarkMode, setIsDarkMode] = useState(() => {
     if (typeof window !== 'undefined') {
       const savedTheme = localStorage.getItem('theme');
@@ -40,7 +38,6 @@ const App: React.FC = () => {
     }
   }, [isDarkMode]);
 
-  // Função centralizada para lidar com o botão voltar no Header
   const handleBack = () => {
     setCurrentView('home');
     setSelectedDisciplineId(null);
@@ -55,7 +52,6 @@ const App: React.FC = () => {
         }} 
         isDarkMode={isDarkMode}
         toggleDarkMode={() => setIsDarkMode(!isDarkMode)}
-        // Novas props passadas para o Header saber quando mostrar o botão voltar
         currentView={currentView}
         onBack={handleBack}
       />
@@ -66,7 +62,15 @@ const App: React.FC = () => {
             disciplines={SIMULATIONS} 
             onNavigateToQuiz={() => setCurrentView('career-quiz')}
             onNavigateToCalculators={() => setCurrentView('calculators')}
-            onSelectOption={(option, id) => { setSelectedDisciplineId(id); setCurrentView(option as ViewState); }}
+            onSelectOption={(option, id) => { 
+              // Se o aluno clicar em OSCE, vai para a tela nova
+              if (option === 'osce-setup') {
+                setCurrentView('osce-setup');
+              } else {
+                setSelectedDisciplineId(id); 
+                setCurrentView(option as ViewState); 
+              }
+            }}
           />
         )}
         {currentView === 'career-quiz' && <CareerQuiz onBack={handleBack} />}
@@ -75,11 +79,12 @@ const App: React.FC = () => {
         {currentView === 'admin-dashboard' && <AdminDashboardView onLogout={handleBack} />}
         {currentView === 'summaries-list' && selectedDisciplineId && <SummariesListView disciplineId={selectedDisciplineId} onBack={handleBack} />}
         {currentView === 'references-view' && selectedDisciplineId && <ReferencesView disciplineId={selectedDisciplineId} disciplines={SIMULATIONS} onBack={handleBack} />}
+        
+        {/* RENDERIZAÇÃO DO NOVO COMPONENTE OSCE */}
+        {currentView === 'osce-setup' && <OsceView onBack={handleBack} />}
       </div>
 
       <footer className="bg-white dark:bg-[#1e293b] border-t border-gray-200 dark:border-slate-800/50 py-12 flex flex-col items-center gap-6 mt-auto transition-colors duration-500">
-        
-        {/* LOGO RODAPÉ NO CARTÃO BRANCO (MODO ESCURO) */}
         <div className="dark:bg-white dark:p-2 dark:rounded-2xl transition-all">
           <img 
             src="/logo.png" 
