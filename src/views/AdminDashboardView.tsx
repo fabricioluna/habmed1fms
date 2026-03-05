@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { LogOut, Plus, Trash2, Upload, FileText, Activity, Layers, AlertCircle } from 'lucide-react';
-import { collection, addDoc, getDocs, deleteDoc, doc } from 'firebase/firestore';
+import { LogOut, Plus, Trash2, Upload, FileText, Activity, Layers, AlertCircle, AlertTriangle, Eraser } from 'lucide-react';
+import { collection, addDoc, getDocs, deleteDoc, doc, writeBatch, query, where } from 'firebase/firestore';
 import { db } from '../firebase';
 import type { OsceTheme, OsceStation, OsceAction } from '../types';
 
@@ -55,6 +55,61 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({ onLogout
     }
   };
 
+  // --- NOVO: LIMPAR TODOS OS CASOS CLÍNICOS ---
+  const handleDeleteAllStations = async () => {
+    if (!window.confirm('⚠️ ATENÇÃO: Isso apagará TODOS os casos clínicos do sistema. Esta ação não pode ser desfeita. Deseja continuar?')) return;
+
+    setIsUploading(true);
+    try {
+      const snapshot = await getDocs(collection(db, 'osce_stations'));
+      const batch = writeBatch(db);
+      
+      snapshot.docs.forEach((document) => {
+        batch.delete(doc(db, 'osce_stations', document.id));
+      });
+
+      await batch.commit();
+      setUploadMessage('Todos os casos foram removidos com sucesso.');
+      fetchStations();
+    } catch (error) {
+      console.error(error);
+      setUploadMessage('Erro ao limpar banco de dados.');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  // --- NOVO: LIMPAR CASOS POR TEMA ESPECÍFICO ---
+  const handleDeleteByTheme = async () => {
+    if (!selectedThemeId) {
+      alert("Por favor, selecione um tema primeiro.");
+      return;
+    }
+
+    const themeName = themes.find(t => t.id === selectedThemeId)?.name;
+    if (!window.confirm(`Deseja apagar TODOS os casos do tema "${themeName}"?`)) return;
+
+    setIsUploading(true);
+    try {
+      const q = query(collection(db, 'osce_stations'), where('themeId', '==', selectedThemeId));
+      const snapshot = await getDocs(q);
+      const batch = writeBatch(db);
+
+      snapshot.docs.forEach((document) => {
+        batch.delete(doc(db, 'osce_stations', document.id));
+      });
+
+      await batch.commit();
+      setUploadMessage(`Todos os casos do tema "${themeName}" foram removidos.`);
+      fetchStations();
+    } catch (error) {
+      console.error(error);
+      setUploadMessage('Erro ao remover casos por tema.');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   // --- GERENCIAMENTO DE ESTAÇÕES (CSV UPLOAD) ---
   const handleCsvUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!selectedThemeId) {
@@ -77,7 +132,6 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({ onLogout
         
         let successCount = 0;
 
-        // Pula o cabeçalho (i=1)
         for (let i = 1; i < rows.length; i++) {
           const columns = rows[i].split(';');
           if (columns.length < 7) continue;
@@ -86,7 +140,6 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({ onLogout
 
           const actions: OsceAction[] = [];
           
-          // Processa as ações separadas por "|"
           corretas.split('|').forEach(a => { if (a.trim()) actions.push({ id: crypto.randomUUID(), text: a.trim(), type: 'correct' }) });
           incorretas.split('|').forEach(a => { if (a.trim()) actions.push({ id: crypto.randomUUID(), text: a.trim(), type: 'incorrect' }) });
           fatais.split('|').forEach(a => { if (a.trim()) actions.push({ id: crypto.randomUUID(), text: a.trim(), type: 'fatal' }) });
@@ -135,7 +188,6 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({ onLogout
         </button>
       </div>
 
-      {/* ABAS */}
       <div className="flex gap-4 mb-8 border-b border-gray-200 dark:border-slate-800 pb-px overflow-x-auto">
         <button 
           onClick={() => setActiveTab('resumos')} 
@@ -157,7 +209,6 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({ onLogout
         </button>
       </div>
 
-      {/* CONTEÚDO: TEMAS OSCE */}
       {activeTab === 'osce-themes' && (
         <div className="grid md:grid-cols-3 gap-8">
           <div className="md:col-span-1 bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-sm border border-gray-100 dark:border-slate-800">
@@ -194,62 +245,67 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({ onLogout
         </div>
       )}
 
-      {/* CONTEÚDO: ESTAÇÕES OSCE VIA CSV */}
       {activeTab === 'osce-stations' && (
         <div className="grid md:grid-cols-3 gap-8">
-          
-          {/* Formulário de Upload */}
-          <div className="md:col-span-1 bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-sm border border-gray-100 dark:border-slate-800">
-            <h3 className="font-black text-[#003366] dark:text-slate-100 mb-4 flex items-center gap-2"><Upload size={18}/> Importar CSV</h3>
-            
-            <div className="space-y-6">
-              <div>
-                <label className="block text-xs font-bold text-gray-500 mb-2">1. Selecione o Tema (Obrigatório)</label>
-                <select 
-                  value={selectedThemeId} 
-                  onChange={(e) => setSelectedThemeId(e.target.value)}
-                  className="w-full bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm dark:text-white outline-none focus:border-[#D4A017] transition-all font-medium"
-                >
-                  <option value="" disabled>-- Escolha um tema --</option>
-                  {themes.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
-                </select>
-              </div>
-
-              <div className={`p-4 rounded-2xl border-2 border-dashed transition-all text-center ${selectedThemeId ? 'border-blue-300 bg-blue-50/50 dark:border-blue-800 dark:bg-slate-800' : 'border-gray-200 bg-gray-50 dark:border-slate-700 dark:bg-slate-800 opacity-50 cursor-not-allowed'}`}>
-                <input 
-                  type="file" 
-                  accept=".csv" 
-                  disabled={!selectedThemeId || isUploading}
-                  onChange={handleCsvUpload}
-                  className="hidden" 
-                  id="csv-upload"
-                />
-                <label htmlFor="csv-upload" className={`flex flex-col items-center gap-2 ${selectedThemeId && !isUploading ? 'cursor-pointer text-[#003366] dark:text-blue-400 hover:text-[#D4A017]' : 'text-gray-400'}`}>
-                  <FileText size={32} />
-                  <span className="text-sm font-bold">{isUploading ? 'Processando...' : 'Clique para subir o CSV'}</span>
-                  <span className="text-[10px] text-gray-500">Separado por Ponto e Vírgula (;)</span>
-                </label>
-              </div>
+          <div className="md:col-span-1 space-y-6">
+            <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-sm border border-gray-100 dark:border-slate-800">
+              <h3 className="font-black text-[#003366] dark:text-slate-100 mb-4 flex items-center gap-2"><Upload size={18}/> Importar CSV</h3>
               
-              {uploadMessage && (
-                <div className="text-xs font-bold text-center p-2 rounded-lg bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400">
-                  {uploadMessage}
+              <div className="space-y-6">
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 mb-2">1. Selecione o Tema (Obrigatório)</label>
+                  <select 
+                    value={selectedThemeId} 
+                    onChange={(e) => setSelectedThemeId(e.target.value)}
+                    className="w-full bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm dark:text-white outline-none focus:border-[#D4A017] transition-all font-medium"
+                  >
+                    <option value="" disabled>-- Escolha um tema --</option>
+                    {themes.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                  </select>
                 </div>
-              )}
+
+                <div className={`p-4 rounded-2xl border-2 border-dashed transition-all text-center ${selectedThemeId ? 'border-blue-300 bg-blue-50/50 dark:border-blue-800 dark:bg-slate-800' : 'border-gray-200 bg-gray-50 dark:border-slate-700 dark:bg-slate-800 opacity-50 cursor-not-allowed'}`}>
+                  <input type="file" accept=".csv" disabled={!selectedThemeId || isUploading} onChange={handleCsvUpload} className="hidden" id="csv-upload" />
+                  <label htmlFor="csv-upload" className={`flex flex-col items-center gap-2 ${selectedThemeId && !isUploading ? 'cursor-pointer text-[#003366] dark:text-blue-400 hover:text-[#D4A017]' : 'text-gray-400'}`}>
+                    <FileText size={32} />
+                    <span className="text-sm font-bold">{isUploading ? 'Processando...' : 'Clique para subir o CSV'}</span>
+                  </label>
+                </div>
+                
+                {uploadMessage && (
+                  <div className="text-xs font-bold text-center p-2 rounded-lg bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400">
+                    {uploadMessage}
+                  </div>
+                )}
+              </div>
             </div>
 
-            <div className="mt-8 bg-blue-50 dark:bg-slate-800 p-4 rounded-xl border border-blue-100 dark:border-slate-700">
-              <h4 className="text-[10px] font-black uppercase text-[#003366] dark:text-blue-300 mb-2 flex items-center gap-1"><AlertCircle size={12}/> Formato do CSV</h4>
-              <p className="text-[10px] text-gray-600 dark:text-slate-400 leading-relaxed mb-2">
-                O arquivo deve conter as seguintes colunas separadas por <strong>ponto e vírgula (;)</strong>. As ações múltiplas devem ser separadas por <strong>pipe (|)</strong>.
-              </p>
-              <code className="block bg-white dark:bg-slate-900 p-2 rounded text-[9px] text-emerald-600 dark:text-emerald-400 overflow-x-auto whitespace-nowrap">
-                Titulo; Cenario; Corretas(A|B); Incorretas(C|D); Fatais(E|F); Debriefing; Tempo(Minutos)
-              </code>
+            {/* ZONA DE MANUTENÇÃO */}
+            <div className="bg-red-50/50 dark:bg-red-900/10 p-6 rounded-3xl border border-red-100 dark:border-red-900/30">
+              <h3 className="font-black text-red-600 dark:text-red-400 mb-4 flex items-center gap-2 text-sm">
+                <AlertTriangle size={18}/> Zona de Manutenção
+              </h3>
+              
+              <div className="space-y-3">
+                <button 
+                  onClick={handleDeleteByTheme}
+                  disabled={!selectedThemeId || isUploading}
+                  className="w-full flex items-center justify-between bg-white dark:bg-slate-900 border border-red-200 dark:border-red-900/50 p-3 rounded-xl text-xs font-bold text-red-600 dark:text-red-400 hover:bg-red-600 hover:text-white transition-all disabled:opacity-50"
+                >
+                  Limpar este Tema <Eraser size={16} />
+                </button>
+
+                <button 
+                  onClick={handleDeleteAllStations}
+                  disabled={isUploading}
+                  className="w-full flex items-center justify-between bg-red-600 text-white p-3 rounded-xl text-xs font-bold hover:bg-red-700 transition-all shadow-md"
+                >
+                  APAGAR TUDO <Trash2 size={16} />
+                </button>
+              </div>
             </div>
           </div>
 
-          {/* Lista de Estações */}
           <div className="md:col-span-2 space-y-4">
             <h3 className="font-black text-gray-400 dark:text-slate-500 text-xs uppercase tracking-widest">Estações Carregadas ({stations.length})</h3>
             
@@ -258,7 +314,7 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({ onLogout
                 <p className="text-sm text-gray-400 font-medium">Nenhuma estação cadastrada. Suba um arquivo CSV.</p>
               </div>
             ) : (
-              <div className="grid gap-3">
+              <div className="grid gap-3 overflow-y-auto max-h-[800px] pr-2">
                 {stations.map(station => {
                   const themeName = themes.find(t => t.id === station.themeId)?.name || 'Tema Desconhecido';
                   return (
@@ -283,7 +339,6 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({ onLogout
         </div>
       )}
 
-      {/* Aba de Resumos Teóricos (Futuro/Mantida a estrutura para não quebrar) */}
       {activeTab === 'resumos' && (
         <div className="bg-white dark:bg-slate-900 p-10 rounded-3xl shadow-sm text-center border border-gray-100 dark:border-slate-800">
           <p className="text-gray-500 dark:text-slate-400 font-medium">Módulo de gestão de resumos (Seu código existente pode ser inserido aqui).</p>
